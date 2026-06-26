@@ -14,3 +14,11 @@ create policy "owner can update" on public.providers
     and edit_token = current_setting('request.headers', true)::json ->> 'x-edit-token'
   )
   with check (true);
+
+drop policy if exists "owner can delete" on public.providers;
+create policy "owner can delete" on public.providers
+  for delete
+  using (
+    edit_token is not null
+    and edit_token = current_setting('request.headers', true)::json ->> 'x-edit-token'
+  );

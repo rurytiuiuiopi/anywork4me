@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { LocationControl } from "@/components/LocationControl";
-import { fetchProvider, registerProvider, updateProvider } from "@/lib/api";
+import { deleteProvider, fetchProvider, registerProvider, updateProvider } from "@/lib/api";
 import { CATEGORIES } from "@/lib/categories";
 import { useLocation } from "@/lib/location/LocationProvider";
 import { fileToBannerDataUrl } from "@/lib/image";
-import { getEditToken, rememberListing } from "@/lib/ownership";
+import { forgetListing, getEditToken, rememberListing } from "@/lib/ownership";
 import type { PricingUnit } from "@/lib/types";
 
 const UNITS: PricingUnit[] = ["hour", "day", "job", "session", "person", "km"];
@@ -45,6 +45,27 @@ function AvailableForm() {
   const [editToken, setEditToken] = useState<string>();
   const [loadingEdit, setLoadingEdit] = useState(isEdit);
   const [notAllowed, setNotAllowed] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function onDelete() {
+    if (!editToken) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    setDeleting(true);
+    setError(null);
+    try {
+      await deleteProvider(editId, editToken);
+      forgetListing(editId);
+      router.push("/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not delete listing");
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  }
 
   useEffect(() => {
     if (!editId) return;
@@ -383,10 +404,38 @@ function AvailableForm() {
                 ? "Save changes"
                 : "Go live & become searchable"}
           </button>
-          <p className="mt-2 text-center text-xs text-muted">
-            By continuing you agree to appear in nearby searches.
-          </p>
+          {!isEdit && (
+            <p className="mt-2 text-center text-xs text-muted">
+              By continuing you agree to appear in nearby searches.
+            </p>
+          )}
         </div>
+
+        {isEdit && (
+          <div className="pt-5">
+            <button
+              type="button"
+              onClick={onDelete}
+              disabled={deleting}
+              className="w-full rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600 transition active:scale-[0.99] disabled:opacity-50 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300"
+            >
+              {deleting
+                ? "Deleting…"
+                : confirmDelete
+                  ? "Tap again to permanently delete"
+                  : "Delete this listing"}
+            </button>
+            {confirmDelete && !deleting && (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                className="mt-2 w-full text-center text-xs text-muted underline underline-offset-2"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+        )}
       </form>
     </main>
   );

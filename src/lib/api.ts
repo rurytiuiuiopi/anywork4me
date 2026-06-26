@@ -106,3 +106,14 @@ export async function updateProvider(
   const data = (await res.json()) as { provider: Provider };
   return data.provider;
 }
+
+export async function deleteProvider(id: string, editToken: string): Promise<void> {
+  const res = await fetch(`/api/providers/${id}`, {
+    method: "DELETE",
+    headers: { "x-edit-token": editToken },
+  });
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error ?? "Could not delete listing");
+  }
+}

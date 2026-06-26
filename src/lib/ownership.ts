@@ -25,6 +25,13 @@ export function getEditToken(id: string): string | undefined {
   return read()[id];
 }
 
+export function forgetListing(id: string): void {
+  if (typeof window === "undefined") return;
+  const owned = read();
+  delete owned[id];
+  window.localStorage.setItem(KEY, JSON.stringify(owned));
+}
+
 export function ownsListing(id: string): boolean {
   return !!read()[id];
 }

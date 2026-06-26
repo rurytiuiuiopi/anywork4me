@@ -82,3 +82,28 @@ export async function PATCH(
     );
   }
 }
+
+// DELETE /api/providers/:id  — owner delete. Token via the x-edit-token header.
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+  const editToken = req.headers.get("x-edit-token") ?? "";
+  if (!editToken) {
+    return NextResponse.json({ error: "Not authorized." }, { status: 403 });
+  }
+  try {
+    await repository.remove(id, editToken, ctxFromParams(new URLSearchParams()));
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "";
+    if (/not authorized|not found/i.test(msg)) {
+      return NextResponse.json({ error: "You can only delete your own listing." }, { status: 403 });
+    }
+    return NextResponse.json(
+      { error: "Deleting isn’t available yet. Please try again later." },
+      { status: 503 },
+    );
+  }
+}
