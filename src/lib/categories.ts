@@ -20,6 +20,11 @@ export const CATEGORIES: Category[] = [
   { id: "barber", name: "Barber", emoji: "💇", group: "Beauty", primary: true, keywords: ["barber", "haircut", "fade", "grooming"] },
   { id: "delivery", name: "Delivery", emoji: "🚚", group: "Transport", primary: true, keywords: ["delivery", "courier", "dispatch", "package"] },
   { id: "catering", name: "Catering", emoji: "🍽️", group: "Food", primary: true, keywords: ["catering", "caterer", "event food", "buffet"] },
+  { id: "talent-agent", name: "Talent Agent", emoji: "🌟", group: "Events", primary: true, keywords: ["talent agent", "agent", "booking agent", "talent", "management"] },
+  { id: "event-coordinator", name: "Event Coordinator", emoji: "🎊", group: "Events", primary: true, keywords: ["event coordinator", "event planner", "planner", "coordinator", "events"] },
+  { id: "travel-agent", name: "Travel Agent", emoji: "✈️", group: "Professional", primary: true, keywords: ["travel agent", "travel", "flights", "tours", "holiday", "trip", "visa"] },
+  { id: "security", name: "Security", emoji: "🛡️", group: "Professional", primary: true, keywords: ["security", "guard", "bouncer", "bodyguard", "cctv", "watchman"] },
+  { id: "artiste", name: "Artiste", emoji: "🎭", group: "Events", primary: true, keywords: ["artiste", "artist", "musician", "performer", "singer", "act"] },
 
   // ── "View More" ────────────────────────────────────────────────────
   { id: "cleaner", name: "Cleaner", emoji: "🧹", group: "Home", keywords: ["cleaner", "cleaning", "maid", "housekeeping"] },
@@ -27,8 +32,8 @@ export const CATEGORIES: Category[] = [
   { id: "mechanic", name: "Mechanic", emoji: "🔩", group: "Transport", keywords: ["mechanic", "auto", "car repair", "garage"] },
   { id: "tailor", name: "Tailor", emoji: "🧵", group: "Beauty", keywords: ["tailor", "seamstress", "fashion", "sewing"] },
   { id: "carpenter", name: "Carpenter", emoji: "🪚", group: "Home", keywords: ["carpenter", "woodwork", "furniture", "joinery"] },
-  { id: "painter", name: "Painter", emoji: "🎨", group: "Home", keywords: ["painter", "painting", "decorator"] },
-  { id: "nanny", name: "Nanny", emoji: "🍼", group: "Care", keywords: ["nanny", "babysitter", "childcare"] },
+  { id: "painter", name: "Painter", emoji: "🎨", group: "Home", primary: true, keywords: ["painter", "painting", "decorator"] },
+  { id: "nanny", name: "Nanny", emoji: "🍼", group: "Care", primary: true, keywords: ["nanny", "babysitter", "childcare"] },
   { id: "fitness", name: "Fitness Trainer", emoji: "🏋️", group: "Health", keywords: ["fitness", "trainer", "gym", "personal trainer"] },
   { id: "videographer", name: "Videographer", emoji: "🎥", group: "Events", keywords: ["videographer", "video", "filming"] },
   { id: "decorator", name: "Event Decorator", emoji: "🎈", group: "Events", keywords: ["decorator", "decor", "events", "balloons"] },
