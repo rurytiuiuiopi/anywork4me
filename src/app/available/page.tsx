@@ -7,6 +7,7 @@ import { LocationControl } from "@/components/LocationControl";
 import { registerProvider } from "@/lib/api";
 import { CATEGORIES } from "@/lib/categories";
 import { useLocation } from "@/lib/location/LocationProvider";
+import { uploadFlyer } from "@/lib/supabase-browser";
 import type { PricingUnit } from "@/lib/types";
 
 const UNITS: PricingUnit[] = ["hour", "day", "job", "session", "person", "km"];
@@ -24,11 +25,33 @@ export default function AvailablePage() {
   const [area, setArea] = useState("");
   const [priceFrom, setPriceFrom] = useState("");
   const [priceUnit, setPriceUnit] = useState<PricingUnit>("hour");
+  const [bannerUrl, setBannerUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const toggleCat = (id: string) =>
     setCats((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
+
+  async function onFlyer(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 6 * 1024 * 1024) {
+      setError("Please choose an image under 6 MB.");
+      e.target.value = "";
+      return;
+    }
+    setError(null);
+    setUploading(true);
+    try {
+      setBannerUrl(await uploadFlyer(file));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn’t upload that image.");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
 
   const canSubmit = name.trim() && cats.length > 0 && !submitting;
 
@@ -49,6 +72,7 @@ export default function AvailablePage() {
           area: area.trim() || undefined,
           priceFrom: priceFrom ? Number(priceFrom) : undefined,
           priceUnit,
+          bannerUrl: bannerUrl || undefined,
         },
         ctx,
       );
@@ -86,11 +110,47 @@ export default function AvailablePage() {
       </div>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-6">
+        <div>
+          <FieldLabel label="Flyer / banner" hint="optional" />
+          <label className="brand-gradient relative mt-1 flex aspect-[2/1] w-full cursor-pointer items-center justify-center overflow-hidden rounded-3xl text-accent-foreground shadow-sm transition active:scale-[0.99]">
+            {bannerUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={bannerUrl} alt="Your flyer" className="absolute inset-0 h-full w-full object-cover" />
+            ) : (
+              <div className="flex flex-col items-center gap-1 px-6 text-center">
+                <span className="text-3xl">🖼️</span>
+                <span className="text-sm font-semibold">
+                  {uploading ? "Uploading…" : "Add your flyer"}
+                </span>
+                <span className="text-xs opacity-80">
+                  A photo or poster shown as the banner on your profile
+                </span>
+              </div>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              disabled={uploading}
+              onChange={onFlyer}
+            />
+          </label>
+          {bannerUrl && (
+            <button
+              type="button"
+              onClick={() => setBannerUrl("")}
+              className="mt-2 text-xs font-medium text-muted underline underline-offset-2"
+            >
+              Remove flyer
+            </button>
+          )}
+        </div>
+
         <Field label="Your name" required>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Kojo Mensah"
+            placeholder="e.g. Yvonne Christie"
             className={inputCls}
             required
           />

@@ -68,6 +68,8 @@ export interface Provider {
   location: ProviderLocation;
   /** Deterministic gradient seeds (no external image assets required). */
   photos: string[];
+  /** Optional uploaded flyer/banner image shown across the profile hero. */
+  bannerUrl?: string;
   pricing?: Pricing;
   availability: AvailabilityStatus;
   rating: number; // 0..5 aggregate
@@ -116,4 +118,6 @@ export interface ProviderRegistration {
   area?: string;
   priceFrom?: number;
   priceUnit?: PricingUnit;
+  /** Public URL of an uploaded flyer/banner (Supabase Storage). */
+  bannerUrl?: string;
 }
