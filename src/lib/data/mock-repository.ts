@@ -1,0 +1,152 @@
+import { CATEGORIES, matchCategory } from "../categories";
+import { distanceKm, offsetPoint } from "../geo";
+import { DEFAULT_COUNTRY, getCountry } from "../location/countries";
+import type {
+  Category,
+  Provider,
+  ProviderRegistration,
+  Review,
+  SearchQuery,
+  SearchResult,
+  UserContext,
+} from "../types";
+import type { ProviderRepository } from "./repository";
+import { matchesText, scoreProvider } from "./ranking";
+import { SEEDS, type Seed } from "./mock-seeds";
+
+const DAY_MS = 86_400_000;
+
+/** Resolve a location-relative seed into a concrete Provider for this viewer. */
+function resolveSeed(seed: Seed, ctx: UserContext): Provider {
+  const country = getCountry(ctx.country) ?? DEFAULT_COUNTRY;
+  const base = ctx.point ?? country.point;
+  const city = ctx.city ?? country.capital;
+  const currency = ctx.currency ?? country.currency;
+  const now = Date.now();
+
+  const reviews: Review[] = seed.reviews.map((rv, i) => ({
+    id: `${seed.id}-r${i}`,
+    author: rv.author,
+    rating: rv.rating,
+    comment: rv.comment,
+    createdAt: new Date(now - rv.daysAgo * DAY_MS).toISOString(),
+  }));
+
+  return {
+    id: seed.id,
+    name: seed.name,
+    business: seed.business,
+    categories: seed.categories,
+    tagline: seed.tagline,
+    bio: seed.bio,
+    phone: `${country.dialCode} ${seed.phoneLocal}`,
+    whatsapp: `${country.dialCode} ${seed.phoneLocal}`,
+    location: {
+      label: `${seed.area} · ${city}`,
+      area: seed.area,
+      city,
+      country: country.code,
+      point: offsetPoint(base, seed.offset[0], seed.offset[1]),
+    },
+    photos: ["a", "b", "c", "d"].map((s) => `${seed.id}-${s}`),
+    pricing: {
+      from: seed.priceFrom,
+      to: seed.priceTo,
+      unit: seed.priceUnit,
+      currency,
+    },
+    availability: seed.availability,
+    rating: seed.rating,
+    reviewsCount: seed.reviewsCount,
+    reviews,
+    tier: seed.tier,
+    verified: seed.verified,
+    featured: seed.featured,
+    sponsored: seed.sponsored,
+    createdAt: new Date(now - 120 * DAY_MS).toISOString(),
+  };
+}
+
+export class MockProviderRepository implements ProviderRepository {
+  /** Providers registered live this session via "I'm Available". */
+  private registered: Provider[] = [];
+
+  async listCategories(): Promise<Category[]> {
+    return CATEGORIES;
+  }
+
+  async search(query: SearchQuery, ctx: UserContext): Promise<SearchResult[]> {
+    const all = [...SEEDS.map((s) => resolveSeed(s, ctx)), ...this.registered];
+    const q = query.q?.trim();
+    const targetCat = query.categoryId ?? (q ? matchCategory(q)?.id : undefined);
+
+    let candidates = all;
+    if (targetCat) {
+      const inCat = all.filter((p) => p.categories.includes(targetCat));
+      candidates = inCat.length ? inCat : all;
+    }
+    if (q) {
+      const textMatched = candidates.filter((p) => matchesText(p, q));
+      if (textMatched.length) candidates = textMatched;
+      else if (!targetCat) candidates = all.filter((p) => matchesText(p, q));
+    }
+
+    const base = ctx.point ?? (getCountry(ctx.country) ?? DEFAULT_COUNTRY).point;
+    const results = candidates.map<SearchResult>((p) => {
+      const d = distanceKm(base, p.location.point);
+      return { provider: p, distanceKm: d, score: scoreProvider(p, d, q, targetCat) };
+    });
+
+    results.sort((a, b) => b.score - a.score);
+    return results.slice(0, query.limit ?? 40);
+  }
+
+  async getById(id: string, ctx: UserContext): Promise<Provider | null> {
+    const reg = this.registered.find((p) => p.id === id);
+    if (reg) return reg;
+    const seed = SEEDS.find((s) => s.id === id);
+    return seed ? resolveSeed(seed, ctx) : null;
+  }
+
+  async register(input: ProviderRegistration, ctx: UserContext): Promise<Provider> {
+    const country = getCountry(ctx.country) ?? DEFAULT_COUNTRY;
+    const base = ctx.point ?? country.point;
+    const id = `me-${this.registered.length + 1}-${input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    const provider: Provider = {
+      id,
+      name: input.name,
+      business: input.business,
+      categories: input.categories.length ? input.categories : ["food"],
+      tagline: input.tagline,
+      bio: input.bio,
+      phone: input.phone ? `${country.dialCode} ${input.phone}` : undefined,
+      whatsapp: input.phone ? `${country.dialCode} ${input.phone}` : undefined,
+      location: {
+        label: `${input.area ?? "Your area"} · ${ctx.city ?? country.capital}`,
+        area: input.area ?? "Your area",
+        city: ctx.city ?? country.capital,
+        country: country.code,
+        point: offsetPoint(base, 0.3, 0.3),
+      },
+      photos: [id, `${id}-2`, `${id}-3`],
+      pricing: input.priceFrom
+        ? {
+            from: input.priceFrom,
+            unit: input.priceUnit ?? "job",
+            currency: ctx.currency ?? country.currency,
+          }
+        : undefined,
+      availability: "available",
+      rating: 0,
+      reviewsCount: 0,
+      reviews: [],
+      tier: "standard",
+      verified: false,
+      featured: false,
+      sponsored: false,
+      createdAt: new Date().toISOString(),
+    };
+    this.registered.unshift(provider);
+    return provider;
+  }
+}

@@ -1,0 +1,22 @@
+import type {
+  Category,
+  Provider,
+  ProviderRegistration,
+  SearchQuery,
+  SearchResult,
+  UserContext,
+} from "../types";
+
+/**
+ * The single seam between the app and its data source.
+ *
+ * Phase 1 ships an in-memory mock implementation. Swapping to Supabase/Postgres
+ * later means writing one more class against this interface and changing the
+ * selector in ./index.ts — no UI or API route changes.
+ */
+export interface ProviderRepository {
+  search(query: SearchQuery, ctx: UserContext): Promise<SearchResult[]>;
+  getById(id: string, ctx: UserContext): Promise<Provider | null>;
+  register(input: ProviderRegistration, ctx: UserContext): Promise<Provider>;
+  listCategories(ctx: UserContext): Promise<Category[]>;
+}
