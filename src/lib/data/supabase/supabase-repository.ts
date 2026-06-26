@@ -6,6 +6,7 @@ import type {
   Provider,
   ProviderRegistration,
   Review,
+  ReviewInput,
   SearchQuery,
   SearchResult,
   UserContext,
@@ -106,12 +107,12 @@ export class SupabaseProviderRepository implements ProviderRepository {
     if (error) throw new Error(error.message);
     if (!data) return null;
 
-    const { data: reviewRows } = await supabase
+    const { data: reviewRows, count } = await supabase
       .from("reviews")
-      .select("*")
+      .select("*", { count: "exact" })
       .eq("provider_id", id)
       .order("created_at", { ascending: false })
-      .limit(20);
+      .limit(50);
 
     const reviews: Review[] = (reviewRows ?? []).map((r) => ({
       id: r.id,
@@ -120,7 +121,37 @@ export class SupabaseProviderRepository implements ProviderRepository {
       comment: r.comment ?? "",
       createdAt: r.created_at,
     }));
-    return rowToProvider(data, reviews);
+
+    const provider = rowToProvider(data, reviews);
+    // Live aggregate computed from real reviews (no stored-counter drift).
+    if (reviews.length) {
+      provider.reviewsCount = count ?? reviews.length;
+      provider.rating =
+        Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10;
+    }
+    return provider;
+  }
+
+  async addReview(providerId: string, input: ReviewInput): Promise<Review> {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("reviews")
+      .insert({
+        provider_id: providerId,
+        author: input.author,
+        rating: input.rating,
+        comment: input.comment || null,
+      })
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    return {
+      id: data.id,
+      author: data.author,
+      rating: data.rating,
+      comment: data.comment ?? "",
+      createdAt: data.created_at,
+    };
   }
 
   async register(input: ProviderRegistration, ctx: UserContext): Promise<Provider> {

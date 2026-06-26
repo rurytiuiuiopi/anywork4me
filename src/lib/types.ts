@@ -41,6 +41,12 @@ export interface Review {
   createdAt: string; // ISO
 }
 
+export interface ReviewInput {
+  author: string;
+  rating: number; // 1..5
+  comment: string;
+}
+
 export interface ProviderLocation {
   /** Human label, e.g. "Old Town · Accra". */
   label: string;
