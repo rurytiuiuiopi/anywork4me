@@ -1,0 +1,35 @@
+<svg width="1024" height="500" viewBox="0 0 1024 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1024" y2="500" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4f46e5"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="500" fill="url(#bg)"/>
+  <circle cx="880" cy="90" r="300" fill="#ffffff" opacity="0.07"/>
+  <circle cx="120" cy="470" r="220" fill="#000000" opacity="0.06"/>
+
+  <!-- logo + wordmark -->
+  <g transform="translate(74,66)">
+    <rect x="-6" y="-4" width="76" height="76" rx="20" fill="#ffffff" opacity="0.16"/>
+    <g fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round">
+      <circle cx="30" cy="30" r="20"/>
+      <line x1="45" y1="45" x2="62" y2="62"/>
+    </g>
+    <text x="92" y="48" font-family="Segoe UI, Arial, sans-serif" font-size="40" font-weight="700" fill="#ffffff">anywork4me</text>
+  </g>
+
+  <!-- headline -->
+  <text x="78" y="248" font-family="Segoe UI, Arial, sans-serif" font-size="66" font-weight="800" fill="#ffffff">Find anyone, anything,</text>
+  <text x="78" y="322" font-family="Segoe UI, Arial, sans-serif" font-size="66" font-weight="800" fill="#ffffff">nearby.</text>
+  <text x="80" y="378" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="500" fill="#ffffff" opacity="0.92">One search. One tap. One result.</text>
+
+  <!-- category pills -->
+  <g font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="600" fill="#4f46e5">
+    <g transform="translate(80,420)"><rect width="92" height="50" rx="25" fill="#ffffff"/><text x="46" y="33" text-anchor="middle">DJ</text></g>
+    <g transform="translate(186,420)"><rect width="168" height="50" rx="25" fill="#ffffff"/><text x="84" y="33" text-anchor="middle">Plumber</text></g>
+    <g transform="translate(368,420)"><rect width="140" height="50" rx="25" fill="#ffffff"/><text x="70" y="33" text-anchor="middle">Driver</text></g>
+    <g transform="translate(522,420)"><rect width="118" height="50" rx="25" fill="#ffffff"/><text x="59" y="33" text-anchor="middle">Food</text></g>
+    <g transform="translate(654,420)"><rect width="206" height="50" rx="25" fill="#ffffff"/><text x="103" y="33" text-anchor="middle">Photographer</text></g>
+  </g>
+</svg>
