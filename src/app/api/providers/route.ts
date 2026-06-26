@@ -1,5 +1,7 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { repository } from "@/lib/data";
+import { submitToIndexNow } from "@/lib/indexnow";
+import { SITE_URL } from "@/lib/seo";
 import type { ProviderRegistration } from "@/lib/types";
 import { ctxFromParams } from "../_ctx";
 
@@ -62,6 +64,13 @@ export async function POST(req: Request) {
             : undefined,
       },
       ctxFromParams(ctxParams),
+    );
+    // New listing → tell search engines to crawl it (and its category pages) now.
+    after(() =>
+      submitToIndexNow([
+        `${SITE_URL}/provider/${provider.id}`,
+        ...provider.categories.map((c) => `${SITE_URL}/find/${c}`),
+      ]),
     );
     return NextResponse.json({ provider }, { status: 201 });
   } catch {
