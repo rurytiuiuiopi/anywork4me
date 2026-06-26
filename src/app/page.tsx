@@ -62,6 +62,12 @@ export default function HomePage() {
           </svg>
         </Link>
       </section>
+
+      <footer className="mt-12 flex items-center justify-center gap-3 text-sm text-muted">
+        <Link href="/privacy" className="transition hover:text-foreground">Privacy</Link>
+        <span aria-hidden>·</span>
+        <Link href="/terms" className="transition hover:text-foreground">Terms</Link>
+      </footer>
     </main>
   );
 }
