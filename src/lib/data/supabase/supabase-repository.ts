@@ -11,6 +11,7 @@ import type {
   SearchResult,
   UserContext,
 } from "../../types";
+import { createClient } from "@supabase/supabase-js";
 import { matchesText, scoreProvider } from "../ranking";
 import type { ProviderRepository } from "../repository";
 import { getSupabase } from "./client";
@@ -196,13 +197,63 @@ export class SupabaseProviderRepository implements ProviderRepository {
       featured: false,
       sponsored: false,
     };
+    const editToken = globalThis.crypto.randomUUID();
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("providers")
-      .insert(row)
+      .insert({ ...row, edit_token: editToken })
       .select("*")
       .single();
+    // If the edit_token column isn't provisioned yet, register without it so
+    // sign-ups never break (editing simply turns on once the migration runs).
+    if (error && /edit_token/i.test(error.message)) {
+      ({ data, error } = await supabase.from("providers").insert(row).select("*").single());
+    }
     if (error) throw new Error(error.message);
-    return rowToProvider(data);
+    const provider = rowToProvider(data);
+    provider.editToken = data.edit_token ?? undefined;
+    return provider;
+  }
+
+  async update(
+    id: string,
+    input: ProviderRegistration,
+    editToken: string,
+    ctx: UserContext,
+  ): Promise<Provider> {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key =
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) throw new Error("Supabase not configured.");
+
+    // Per-request client carrying the secret token; the RLS "owner can update"
+    // policy permits the write only when it matches the listing's stored token.
+    const db = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { headers: { "x-edit-token": editToken } },
+    });
+
+    const country = getCountry(ctx.country) ?? DEFAULT_COUNTRY;
+    const phone = input.phone ? `${country.dialCode} ${input.phone}` : null;
+    const patch: Record<string, unknown> = {
+      name: input.name,
+      business: input.business ?? null,
+      categories: input.categories.length ? input.categories : ["food"],
+      tagline: input.tagline ?? null,
+      bio: input.bio ?? null,
+      phone,
+      whatsapp: phone,
+      area: input.area ?? null,
+      price_from: input.priceFrom ?? null,
+      price_unit: input.priceUnit ?? "job",
+      photos: input.bannerUrl
+        ? [input.bannerUrl, `${id}-2`, `${id}-3`]
+        : [id, `${id}-2`, `${id}-3`],
+    };
+
+    const { data, error } = await db.from("providers").update(patch).eq("id", id).select("*");
+    if (error) throw new Error(error.message);
+    if (!data || data.length === 0) throw new Error("Not authorized to edit this listing.");
+    return rowToProvider(data[0]);
   }
 }

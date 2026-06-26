@@ -1,19 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { LocationControl } from "@/components/LocationControl";
-import { registerProvider } from "@/lib/api";
+import { fetchProvider, registerProvider, updateProvider } from "@/lib/api";
 import { CATEGORIES } from "@/lib/categories";
 import { useLocation } from "@/lib/location/LocationProvider";
 import { fileToBannerDataUrl } from "@/lib/image";
+import { getEditToken, rememberListing } from "@/lib/ownership";
 import type { PricingUnit } from "@/lib/types";
 
 const UNITS: PricingUnit[] = ["hour", "day", "job", "session", "person", "km"];
 
 export default function AvailablePage() {
+  return (
+    <Suspense>
+      <AvailableForm />
+    </Suspense>
+  );
+}
+
+function AvailableForm() {
   const router = useRouter();
+  const params = useSearchParams();
+  const editId = params.get("edit") || "";
   const { ctx, location } = useLocation();
 
   const [name, setName] = useState("");
@@ -29,6 +40,53 @@ export default function AvailablePage() {
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isEdit = !!editId;
+  const [editToken, setEditToken] = useState<string>();
+  const [loadingEdit, setLoadingEdit] = useState(isEdit);
+  const [notAllowed, setNotAllowed] = useState(false);
+
+  useEffect(() => {
+    if (!editId) return;
+    const token = getEditToken(editId);
+    if (!token) {
+      setNotAllowed(true);
+      setLoadingEdit(false);
+      return;
+    }
+    setEditToken(token);
+    let cancelled = false;
+    fetchProvider(editId, ctx)
+      .then((p) => {
+        if (cancelled) return;
+        if (!p) {
+          setNotAllowed(true);
+          setLoadingEdit(false);
+          return;
+        }
+        setName(p.name);
+        setBusiness(p.business ?? "");
+        setCats(p.categories);
+        setTagline(p.tagline ?? "");
+        setBio(p.bio ?? "");
+        setPhone(p.phone?.startsWith("+") ? p.phone.split(" ").slice(1).join(" ") : p.phone ?? "");
+        setArea(p.location.area && p.location.area !== "Your area" ? p.location.area : "");
+        setPriceFrom(p.pricing ? String(p.pricing.from) : "");
+        if (p.pricing?.unit) setPriceUnit(p.pricing.unit);
+        setBannerUrl(p.bannerUrl ?? "");
+        setLoadingEdit(false);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError("Couldn’t load your listing.");
+          setLoadingEdit(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editId]);
 
   const toggleCat = (id: string) =>
     setCats((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
@@ -60,34 +118,70 @@ export default function AvailablePage() {
     if (!canSubmit) return;
     setSubmitting(true);
     setError(null);
+    const values = {
+      name: name.trim(),
+      business: business.trim() || undefined,
+      categories: cats,
+      tagline: tagline.trim() || undefined,
+      bio: bio.trim() || undefined,
+      phone: phone.trim() || undefined,
+      area: area.trim() || undefined,
+      priceFrom: priceFrom ? Number(priceFrom) : undefined,
+      priceUnit,
+      bannerUrl: bannerUrl || undefined,
+    };
     try {
-      const provider = await registerProvider(
-        {
-          name: name.trim(),
-          business: business.trim() || undefined,
-          categories: cats,
-          tagline: tagline.trim() || undefined,
-          bio: bio.trim() || undefined,
-          phone: phone.trim() || undefined,
-          area: area.trim() || undefined,
-          priceFrom: priceFrom ? Number(priceFrom) : undefined,
-          priceUnit,
-          bannerUrl: bannerUrl || undefined,
-        },
-        ctx,
-      );
-      router.push(`/provider/${provider.id}`);
+      if (isEdit) {
+        if (!editToken) throw new Error("You can only edit your own listing.");
+        await updateProvider(editId, values, editToken, ctx);
+        router.push(`/provider/${editId}`);
+      } else {
+        const provider = await registerProvider(values, ctx);
+        rememberListing(provider.id, provider.editToken);
+        router.push(`/provider/${provider.id}`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setSubmitting(false);
     }
   }
 
+  if (isEdit && notAllowed) {
+    return (
+      <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col items-center justify-center gap-4 px-6 text-center">
+        <span className="text-4xl">🔒</span>
+        <h1 className="text-2xl font-semibold">This isn’t your listing</h1>
+        <p className="text-muted">
+          You can only edit a listing from the same device you created it on.
+        </p>
+        <Link
+          href={`/provider/${editId}`}
+          className="brand-gradient rounded-2xl px-5 py-3 text-sm font-semibold text-accent-foreground"
+        >
+          View the listing
+        </Link>
+      </main>
+    );
+  }
+
+  if (isEdit && loadingEdit) {
+    return (
+      <main className="mx-auto min-h-dvh w-full max-w-2xl px-5 py-10">
+        <div className="fm-skeleton h-40 w-full rounded-3xl" />
+        <div className="mt-6 space-y-4">
+          <div className="fm-skeleton h-12 w-full rounded-2xl" />
+          <div className="fm-skeleton h-12 w-full rounded-2xl" />
+          <div className="fm-skeleton h-24 w-full rounded-2xl" />
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto min-h-dvh w-full max-w-2xl px-5 pb-16">
       <header className="flex items-center justify-between gap-3 py-5">
         <Link
-          href="/"
+          href={isEdit ? `/provider/${editId}` : "/"}
           aria-label="Back"
           className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background shadow-sm transition hover:bg-surface active:scale-95"
         >
@@ -100,12 +194,15 @@ export default function AvailablePage() {
 
       <div className="pt-2">
         <span className="brand-gradient inline-flex h-14 w-14 items-center justify-center rounded-2xl text-3xl text-accent-foreground shadow-sm">
-          ✋
+          {isEdit ? "✏️" : "✋"}
         </span>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight">I’m Available</h1>
+        <h1 className="mt-4 text-3xl font-semibold tracking-tight">
+          {isEdit ? "Edit your listing" : "I’m Available"}
+        </h1>
         <p className="mt-2 text-balance text-muted">
-          Create your profile so people in {location.city} can find and book you. Prices
-          are shown in {location.currency}.
+          {isEdit
+            ? "Update your details below, then save your changes."
+            : `Create your profile so people in ${location.city} can find and book you. Prices are shown in ${location.currency}.`}
         </p>
       </div>
 
@@ -278,7 +375,13 @@ export default function AvailablePage() {
             className="brand-gradient flex w-full items-center justify-center rounded-2xl text-base font-semibold text-accent-foreground transition active:scale-[0.99] disabled:opacity-40"
             style={{ height: "3.25rem" }}
           >
-            {submitting ? "Creating your profile…" : "Go live & become searchable"}
+            {submitting
+              ? isEdit
+                ? "Saving…"
+                : "Creating your profile…"
+              : isEdit
+                ? "Save changes"
+                : "Go live & become searchable"}
           </button>
           <p className="mt-2 text-center text-xs text-muted">
             By continuing you agree to appear in nearby searches.

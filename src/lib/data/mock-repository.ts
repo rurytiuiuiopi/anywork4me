@@ -73,6 +73,8 @@ export class MockProviderRepository implements ProviderRepository {
   private registered: Provider[] = [];
   /** Reviews added this session for seed providers (seeds are recomputed per request). */
   private extraReviews = new Map<string, Review[]>();
+  /** Secret edit tokens, kept OUT of the stored provider so reads never leak them. */
+  private editTokens = new Map<string, string>();
 
   /** Merge session-added reviews into a resolved seed provider. */
   private applyExtra(p: Provider): Provider {
@@ -193,6 +195,48 @@ export class MockProviderRepository implements ProviderRepository {
       createdAt: new Date().toISOString(),
     };
     this.registered.unshift(provider);
-    return provider;
+    const editToken = globalThis.crypto.randomUUID();
+    this.editTokens.set(id, editToken);
+    // Token returned ONLY here (to the creator), never stored on the shared object.
+    return { ...provider, editToken };
+  }
+
+  async update(
+    id: string,
+    input: ProviderRegistration,
+    editToken: string,
+    ctx: UserContext,
+  ): Promise<Provider> {
+    const idx = this.registered.findIndex((p) => p.id === id);
+    if (idx === -1) throw new Error("Listing not found.");
+    const existing = this.registered[idx];
+    if (this.editTokens.get(id) !== editToken) {
+      throw new Error("Not authorized to edit this listing.");
+    }
+    const country = getCountry(ctx.country) ?? DEFAULT_COUNTRY;
+    const phone = input.phone ? `${country.dialCode} ${input.phone}` : undefined;
+    const area = input.area ?? existing.location.area;
+    const updated: Provider = {
+      ...existing,
+      name: input.name,
+      business: input.business,
+      categories: input.categories.length ? input.categories : existing.categories,
+      tagline: input.tagline,
+      bio: input.bio,
+      phone,
+      whatsapp: phone,
+      location: { ...existing.location, area, label: `${area} · ${existing.location.city}` },
+      photos: input.bannerUrl ? [input.bannerUrl, `${id}-2`, `${id}-3`] : existing.photos,
+      bannerUrl: input.bannerUrl,
+      pricing: input.priceFrom
+        ? {
+            from: input.priceFrom,
+            unit: input.priceUnit ?? "job",
+            currency: existing.pricing?.currency ?? ctx.currency ?? country.currency,
+          }
+        : undefined,
+    };
+    this.registered[idx] = updated;
+    return updated;
   }
 }

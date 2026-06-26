@@ -87,3 +87,22 @@ export async function registerProvider(
   const data = (await res.json()) as { provider: Provider };
   return data.provider;
 }
+
+export async function updateProvider(
+  id: string,
+  input: ProviderRegistration,
+  editToken: string,
+  ctx: UserContext,
+): Promise<Provider> {
+  const res = await fetch(`/api/providers/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...input, editToken, ctx }),
+  });
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error ?? "Could not save changes");
+  }
+  const data = (await res.json()) as { provider: Provider };
+  return data.provider;
+}
