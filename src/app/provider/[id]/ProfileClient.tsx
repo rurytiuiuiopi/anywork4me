@@ -66,13 +66,22 @@ export function ProfileClient({ id }: { id: string }) {
     <main className="mx-auto min-h-dvh w-full max-w-2xl pb-28">
       {/* Hero */}
       <div className="relative">
-        <Thumb
-          seed={provider.photos[0] ?? provider.id}
-          emoji={emoji}
-          rounded="rounded-none sm:rounded-b-4xl"
-          className="aspect-[5/3] w-full sm:aspect-[2/1]"
-          emojiClassName="text-7xl"
-        />
+        {provider.bannerUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={provider.bannerUrl}
+            alt={provider.business || provider.name}
+            className="aspect-[5/3] w-full bg-surface-2 object-cover sm:aspect-[2/1] sm:rounded-b-4xl"
+          />
+        ) : (
+          <Thumb
+            seed={provider.photos[0] ?? provider.id}
+            emoji={emoji}
+            rounded="rounded-none sm:rounded-b-4xl"
+            className="aspect-[5/3] w-full sm:aspect-[2/1]"
+            emojiClassName="text-7xl"
+          />
+        )}
         <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
           <Link
             href="/search"

@@ -44,6 +44,7 @@ function rowToProvider(row: any, reviews: Review[] = []): Provider {
       point: { lat: row.lat, lng: row.lng },
     },
     photos: row.photos?.length ? row.photos : [row.id],
+    bannerUrl: row.banner_url ?? undefined,
     pricing:
       row.price_from != null
         ? {
@@ -188,6 +189,9 @@ export class SupabaseProviderRepository implements ProviderRepository {
       featured: false,
       sponsored: false,
     };
+    // Only reference banner_url when actually set, so registration still works
+    // before the 0003_flyers migration adds the column.
+    if (input.bannerUrl) (row as any).banner_url = input.bannerUrl;
 
     const { data, error } = await supabase
       .from("providers")

@@ -54,6 +54,10 @@ export async function POST(req: Request) {
         area: body.area,
         priceFrom: body.priceFrom,
         priceUnit: body.priceUnit,
+        bannerUrl:
+          typeof body.bannerUrl === "string" && /^https:\/\//.test(body.bannerUrl)
+            ? body.bannerUrl
+            : undefined,
       },
       ctxFromParams(ctxParams),
     );

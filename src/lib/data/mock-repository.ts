@@ -172,6 +172,7 @@ export class MockProviderRepository implements ProviderRepository {
         point: offsetPoint(base, 0.3, 0.3),
       },
       photos: [id, `${id}-2`, `${id}-3`],
+      bannerUrl: input.bannerUrl,
       pricing: input.priceFrom
         ? {
             from: input.priceFrom,
