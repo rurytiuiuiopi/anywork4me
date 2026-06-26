@@ -1,8 +1,10 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 // Server-only Supabase client. All data access flows through the app's API
-// routes, so the browser never talks to Supabase directly. Writes use the
-// service-role key (kept server-side only); reads fall back to the anon key.
+// routes, so the browser never talks to Supabase directly. Prefers the
+// service-role key (bypasses RLS) when configured; otherwise uses the anon key,
+// which works for reads and — with the public-insert RLS policy — registration.
+// Uses `||` (not `??`) so an empty/blank service-role value falls back to anon.
 
 let cached: SupabaseClient | null = null;
 
@@ -11,7 +13,7 @@ export function getSupabase(): SupabaseClient {
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
