@@ -8,6 +8,9 @@ function hueFromSeed(seed: string): number {
   return h;
 }
 
+const isImageRef = (s: string) =>
+  s.startsWith("data:image") || /^https?:\/\//.test(s);
+
 export function Thumb({
   seed,
   emoji,
@@ -21,6 +24,15 @@ export function Thumb({
   rounded?: string;
   emojiClassName?: string;
 }) {
+  if (isImageRef(seed)) {
+    return (
+      <div className={`relative overflow-hidden ${rounded} ${className}`} aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={seed} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      </div>
+    );
+  }
+
   const h = hueFromSeed(seed);
   const style = {
     backgroundImage: `linear-gradient(135deg, hsl(${h} 72% 56%), hsl(${(h + 42) % 360} 70% 44%))`,

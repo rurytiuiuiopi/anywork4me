@@ -25,8 +25,13 @@ import { getSupabase } from "./client";
 // per-country catalogs, add PostGIS + a `nearby` RPC and order in the database.
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+const isImageRef = (s: unknown): s is string =>
+  typeof s === "string" && (s.startsWith("data:image") || /^https?:\/\//.test(s));
+
 function rowToProvider(row: any, reviews: Review[] = []): Provider {
   const label = [row.area, row.city].filter(Boolean).join(" · ") || row.city || "";
+  // A flyer, when present, is stored as the first `photos` entry (an image ref).
+  const banner = isImageRef(row.photos?.[0]) ? row.photos[0] : (row.banner_url ?? undefined);
   return {
     id: row.id,
     name: row.name,
@@ -44,7 +49,7 @@ function rowToProvider(row: any, reviews: Review[] = []): Provider {
       point: { lat: row.lat, lng: row.lng },
     },
     photos: row.photos?.length ? row.photos : [row.id],
-    bannerUrl: row.banner_url ?? undefined,
+    bannerUrl: banner,
     pricing:
       row.price_from != null
         ? {
@@ -176,7 +181,9 @@ export class SupabaseProviderRepository implements ProviderRepository {
       country: country.code,
       lat: base.lat,
       lng: base.lng,
-      photos: [id, `${id}-2`, `${id}-3`],
+      photos: input.bannerUrl
+        ? [input.bannerUrl, `${id}-2`, `${id}-3`]
+        : [id, `${id}-2`, `${id}-3`],
       price_from: input.priceFrom ?? null,
       price_to: null,
       price_unit: input.priceUnit ?? "job",
@@ -189,9 +196,6 @@ export class SupabaseProviderRepository implements ProviderRepository {
       featured: false,
       sponsored: false,
     };
-    // Only reference banner_url when actually set, so registration still works
-    // before the 0003_flyers migration adds the column.
-    if (input.bannerUrl) (row as any).banner_url = input.bannerUrl;
 
     const { data, error } = await supabase
       .from("providers")

@@ -7,7 +7,7 @@ import { LocationControl } from "@/components/LocationControl";
 import { registerProvider } from "@/lib/api";
 import { CATEGORIES } from "@/lib/categories";
 import { useLocation } from "@/lib/location/LocationProvider";
-import { uploadFlyer } from "@/lib/supabase-browser";
+import { fileToBannerDataUrl } from "@/lib/image";
 import type { PricingUnit } from "@/lib/types";
 
 const UNITS: PricingUnit[] = ["hour", "day", "job", "session", "person", "km"];
@@ -36,17 +36,17 @@ export default function AvailablePage() {
   async function onFlyer(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 6 * 1024 * 1024) {
-      setError("Please choose an image under 6 MB.");
+    if (file.size > 25 * 1024 * 1024) {
+      setError("Please choose an image under 25 MB.");
       e.target.value = "";
       return;
     }
     setError(null);
     setUploading(true);
     try {
-      setBannerUrl(await uploadFlyer(file));
+      setBannerUrl(await fileToBannerDataUrl(file));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn’t upload that image.");
+      setError(err instanceof Error ? err.message : "Couldn’t process that image.");
     } finally {
       setUploading(false);
       e.target.value = "";
