@@ -85,6 +85,12 @@ export interface Provider {
   sponsored: boolean; // sponsored result
 
   createdAt: string;
+
+  /**
+   * Secret returned ONLY to the creator at registration (never on public
+   * reads), saved on their device so they can edit their own listing.
+   */
+  editToken?: string;
 }
 
 /** The viewer's resolved locale/place — drives localization + ranking. */

@@ -11,6 +11,7 @@ import { Thumb } from "@/components/Thumb";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { fetchProvider } from "@/lib/api";
 import { getCategory } from "@/lib/categories";
+import { ownsListing } from "@/lib/ownership";
 import { features } from "@/lib/config";
 import { formatPricing } from "@/lib/format";
 import { distanceKm, formatDistance } from "@/lib/geo";
@@ -35,6 +36,9 @@ export function ProfileClient({ id }: { id: string }) {
   const [provider, setProvider] = useState<Provider | null | undefined>(undefined);
   const [booking, setBooking] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const [owned, setOwned] = useState(false);
+
+  useEffect(() => setOwned(ownsListing(id)), [id]);
 
   function onReviewSubmitted(review: Review) {
     setProvider((prev) => {
@@ -130,6 +134,15 @@ export function ProfileClient({ id }: { id: string }) {
             <span>{provider.location.label}</span>
             {dist !== null && <span>· {formatDistance(dist, location.locale)}</span>}
           </div>
+
+          {owned && (
+            <Link
+              href={`/available?edit=${provider.id}`}
+              className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-semibold text-accent transition active:scale-95"
+            >
+              ✏️ Edit my listing
+            </Link>
+          )}
         </section>
 
         {/* Categories */}
