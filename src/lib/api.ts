@@ -1,6 +1,8 @@
 import type {
   Provider,
   ProviderRegistration,
+  Review,
+  ReviewInput,
   SearchResult,
   UserContext,
 } from "./types";
@@ -49,6 +51,24 @@ export async function fetchProvider(
   if (!res.ok) throw new Error("Failed to load provider");
   const data = (await res.json()) as { provider: Provider };
   return data.provider;
+}
+
+export async function submitReview(
+  providerId: string,
+  input: ReviewInput,
+  ctx: UserContext,
+): Promise<Review> {
+  const res = await fetch(`/api/providers/${providerId}/reviews`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...input, ctx }),
+  });
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error ?? "Could not post your review");
+  }
+  const data = (await res.json()) as { review: Review };
+  return data.review;
 }
 
 export async function registerProvider(

@@ -6,6 +6,7 @@ import type {
   Provider,
   ProviderRegistration,
   Review,
+  ReviewInput,
   SearchQuery,
   SearchResult,
   UserContext,
@@ -70,13 +71,32 @@ function resolveSeed(seed: Seed, ctx: UserContext): Provider {
 export class MockProviderRepository implements ProviderRepository {
   /** Providers registered live this session via "I'm Available". */
   private registered: Provider[] = [];
+  /** Reviews added this session for seed providers (seeds are recomputed per request). */
+  private extraReviews = new Map<string, Review[]>();
+
+  /** Merge session-added reviews into a resolved seed provider. */
+  private applyExtra(p: Provider): Provider {
+    const extra = this.extraReviews.get(p.id);
+    if (!extra?.length) return p;
+    const count = p.reviewsCount + extra.length;
+    const sum = p.rating * p.reviewsCount + extra.reduce((s, r) => s + r.rating, 0);
+    return {
+      ...p,
+      reviews: [...extra, ...p.reviews],
+      reviewsCount: count,
+      rating: count ? Math.round((sum / count) * 10) / 10 : 0,
+    };
+  }
 
   async listCategories(): Promise<Category[]> {
     return CATEGORIES;
   }
 
   async search(query: SearchQuery, ctx: UserContext): Promise<SearchResult[]> {
-    const all = [...SEEDS.map((s) => resolveSeed(s, ctx)), ...this.registered];
+    const all = [
+      ...SEEDS.map((s) => this.applyExtra(resolveSeed(s, ctx))),
+      ...this.registered,
+    ];
     const q = query.q?.trim();
     const targetCat = query.categoryId ?? (q ? matchCategory(q)?.id : undefined);
 
@@ -105,7 +125,30 @@ export class MockProviderRepository implements ProviderRepository {
     const reg = this.registered.find((p) => p.id === id);
     if (reg) return reg;
     const seed = SEEDS.find((s) => s.id === id);
-    return seed ? resolveSeed(seed, ctx) : null;
+    return seed ? this.applyExtra(resolveSeed(seed, ctx)) : null;
+  }
+
+  async addReview(providerId: string, input: ReviewInput): Promise<Review> {
+    const review: Review = {
+      id: `${providerId}-x${this.extraReviews.get(providerId)?.length ?? 0}-${Date.now()}`,
+      author: input.author,
+      rating: input.rating,
+      comment: input.comment,
+      createdAt: new Date().toISOString(),
+    };
+    const reg = this.registered.find((p) => p.id === providerId);
+    if (reg) {
+      reg.reviews.unshift(review);
+      const count = reg.reviewsCount + 1;
+      reg.rating = Math.round(((reg.rating * reg.reviewsCount + review.rating) / count) * 10) / 10;
+      reg.reviewsCount = count;
+      return review;
+    }
+    if (!SEEDS.some((s) => s.id === providerId)) throw new Error("Provider not found");
+    const list = this.extraReviews.get(providerId) ?? [];
+    list.unshift(review);
+    this.extraReviews.set(providerId, list);
+    return review;
   }
 
   async register(input: ProviderRegistration, ctx: UserContext): Promise<Provider> {

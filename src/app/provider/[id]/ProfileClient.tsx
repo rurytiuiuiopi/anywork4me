@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { AvailabilityBadge } from "@/components/AvailabilityBadge";
 import { BookingSheet } from "@/components/BookingSheet";
 import { Rating } from "@/components/Rating";
+import { ReviewSheet } from "@/components/ReviewSheet";
 import { SaveButton } from "@/components/SaveButton";
 import { Thumb } from "@/components/Thumb";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -14,7 +15,7 @@ import { features } from "@/lib/config";
 import { formatPricing } from "@/lib/format";
 import { distanceKm, formatDistance } from "@/lib/geo";
 import { useLocation } from "@/lib/location/LocationProvider";
-import type { Provider } from "@/lib/types";
+import type { Provider, Review } from "@/lib/types";
 
 const tel = (phone?: string) => `tel:${(phone ?? "").replace(/\s+/g, "")}`;
 const wa = (phone?: string) => `https://wa.me/${(phone ?? "").replace(/[^\d]/g, "")}`;
@@ -33,6 +34,17 @@ export function ProfileClient({ id }: { id: string }) {
   const { ctx, location } = useLocation();
   const [provider, setProvider] = useState<Provider | null | undefined>(undefined);
   const [booking, setBooking] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
+
+  function onReviewSubmitted(review: Review) {
+    setProvider((prev) => {
+      if (!prev) return prev;
+      const count = prev.reviewsCount + 1;
+      const rating =
+        Math.round(((prev.rating * prev.reviewsCount + review.rating) / count) * 10) / 10;
+      return { ...prev, reviews: [review, ...prev.reviews], reviewsCount: count, rating };
+    });
+  }
 
   useEffect(() => {
     const ac = new AbortController();
@@ -166,13 +178,29 @@ export function ProfileClient({ id }: { id: string }) {
         </section>
 
         {/* Reviews */}
-        {features.trust.reviews && provider.reviews.length > 0 && (
+        {features.trust.reviews && (
           <section className="mt-7">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
-              Reviews ({new Intl.NumberFormat(location.locale).format(provider.reviewsCount)})
-            </h2>
-            <ul className="mt-3 space-y-4">
-              {provider.reviews.map((rv) => (
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
+                Reviews
+                {provider.reviewsCount > 0
+                  ? ` (${new Intl.NumberFormat(location.locale).format(provider.reviewsCount)})`
+                  : ""}
+              </h2>
+              <button
+                onClick={() => setReviewing(true)}
+                className="rounded-full border border-border px-3.5 py-1.5 text-sm font-semibold transition hover:border-accent/40 active:scale-95"
+              >
+                Write a review
+              </button>
+            </div>
+            {provider.reviews.length === 0 ? (
+              <p className="mt-3 text-sm text-muted">
+                No reviews yet — be the first to review {provider.name}.
+              </p>
+            ) : (
+              <ul className="mt-3 space-y-4">
+                {provider.reviews.map((rv) => (
                 <li key={rv.id} className="flex gap-3">
                   <Thumb seed={rv.author} className="h-10 w-10 shrink-0" rounded="rounded-full" />
                   <div className="min-w-0 flex-1">
@@ -188,7 +216,8 @@ export function ProfileClient({ id }: { id: string }) {
                   </div>
                 </li>
               ))}
-            </ul>
+              </ul>
+            )}
           </section>
         )}
       </div>
@@ -226,6 +255,13 @@ export function ProfileClient({ id }: { id: string }) {
       </div>
 
       <BookingSheet provider={provider} open={booking} onClose={() => setBooking(false)} />
+      <ReviewSheet
+        providerId={provider.id}
+        providerName={provider.name}
+        open={reviewing}
+        onClose={() => setReviewing(false)}
+        onSubmitted={onReviewSubmitted}
+      />
     </main>
   );
 }

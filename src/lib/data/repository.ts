@@ -2,6 +2,8 @@ import type {
   Category,
   Provider,
   ProviderRegistration,
+  Review,
+  ReviewInput,
   SearchQuery,
   SearchResult,
   UserContext,
@@ -18,5 +20,6 @@ export interface ProviderRepository {
   search(query: SearchQuery, ctx: UserContext): Promise<SearchResult[]>;
   getById(id: string, ctx: UserContext): Promise<Provider | null>;
   register(input: ProviderRegistration, ctx: UserContext): Promise<Provider>;
+  addReview(providerId: string, input: ReviewInput, ctx: UserContext): Promise<Review>;
   listCategories(ctx: UserContext): Promise<Category[]>;
 }
