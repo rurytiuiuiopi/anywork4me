@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.anywork4me.www.twa",
+      "sha256_cert_fingerprints": [
+        "9B:2D:45:41:DC:64:00:72:5C:3A:19:7D:DF:64:55:C4:0B:C4:A6:3C:B9:10:05:9A:5D:00:4F:DF:CE:2C:3E:09"
+      ]
+    }
+  }
+]
