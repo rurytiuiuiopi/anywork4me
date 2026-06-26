@@ -55,7 +55,9 @@ export async function POST(req: Request) {
         priceFrom: body.priceFrom,
         priceUnit: body.priceUnit,
         bannerUrl:
-          typeof body.bannerUrl === "string" && /^https:\/\//.test(body.bannerUrl)
+          typeof body.bannerUrl === "string" &&
+          /^(data:image\/|https:\/\/)/.test(body.bannerUrl) &&
+          body.bannerUrl.length < 3_900_000
             ? body.bannerUrl
             : undefined,
       },
