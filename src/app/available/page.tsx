@@ -178,8 +178,15 @@ export default function AvailablePage() {
               </span>
               <input
                 value={priceFrom}
-                onChange={(e) => setPriceFrom(e.target.value.replace(/[^\d.]/g, ""))}
+                onChange={(e) => {
+                  let v = e.target.value.replace(/[^\d.]/g, "");
+                  const dot = v.indexOf(".");
+                  if (dot !== -1) v = v.slice(0, dot + 1) + v.slice(dot + 1).replace(/\./g, "");
+                  if (Number(v) > 100_000_000) v = "100000000";
+                  setPriceFrom(v);
+                }}
                 inputMode="decimal"
+                maxLength={12}
                 placeholder="From"
                 className={`${inputCls} pl-14`}
               />

@@ -1,19 +1,28 @@
 import type { Pricing } from "./types";
 
-/** Locale-aware money formatting. Falls back gracefully for unknown currencies. */
+/** The largest price a provider can set, to keep listings sane. */
+export const MAX_PRICE = 100_000_000;
+
+/**
+ * Locale-aware money formatting. Big amounts use compact notation
+ * (e.g. "GHS 2.5M") so a price never renders as a wall of digits.
+ */
 export function formatMoney(
   amount: number,
   currency: string,
   locale = "en",
 ): string {
+  const value = Math.min(Math.max(Number.isFinite(amount) ? amount : 0, 0), MAX_PRICE);
+  const compact = value >= 100_000;
   try {
     return new Intl.NumberFormat(locale, {
       style: "currency",
       currency,
-      maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
-    }).format(amount);
+      notation: compact ? "compact" : "standard",
+      maximumFractionDigits: compact ? 1 : value % 1 === 0 ? 0 : 2,
+    }).format(value);
   } catch {
-    return `${currency} ${amount}`;
+    return `${currency} ${new Intl.NumberFormat(locale).format(value)}`;
   }
 }
 
