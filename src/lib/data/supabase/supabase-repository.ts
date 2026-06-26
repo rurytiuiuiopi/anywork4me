@@ -256,4 +256,19 @@ export class SupabaseProviderRepository implements ProviderRepository {
     if (!data || data.length === 0) throw new Error("Not authorized to edit this listing.");
     return rowToProvider(data[0]);
   }
+
+  async remove(id: string, editToken: string): Promise<void> {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key =
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) throw new Error("Supabase not configured.");
+
+    const db = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { headers: { "x-edit-token": editToken } },
+    });
+    const { data, error } = await db.from("providers").delete().eq("id", id).select("id");
+    if (error) throw new Error(error.message);
+    if (!data || data.length === 0) throw new Error("Not authorized to edit this listing.");
+  }
 }

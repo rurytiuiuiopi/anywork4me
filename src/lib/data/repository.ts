@@ -27,6 +27,8 @@ export interface ProviderRepository {
     editToken: string,
     ctx: UserContext,
   ): Promise<Provider>;
+  /** Owner-only delete, authorized by the listing's secret edit token. */
+  remove(id: string, editToken: string, ctx: UserContext): Promise<void>;
   addReview(providerId: string, input: ReviewInput, ctx: UserContext): Promise<Review>;
   listCategories(ctx: UserContext): Promise<Category[]>;
 }

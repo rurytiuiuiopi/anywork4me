@@ -239,4 +239,14 @@ export class MockProviderRepository implements ProviderRepository {
     this.registered[idx] = updated;
     return updated;
   }
+
+  async remove(id: string, editToken: string): Promise<void> {
+    const idx = this.registered.findIndex((p) => p.id === id);
+    if (idx === -1) throw new Error("Listing not found.");
+    if (this.editTokens.get(id) !== editToken) {
+      throw new Error("Not authorized to edit this listing.");
+    }
+    this.registered.splice(idx, 1);
+    this.editTokens.delete(id);
+  }
 }
