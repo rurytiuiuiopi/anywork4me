@@ -8,6 +8,7 @@ import { Rating } from "@/components/Rating";
 import { ReviewSheet } from "@/components/ReviewSheet";
 import { SaveButton } from "@/components/SaveButton";
 import { Thumb } from "@/components/Thumb";
+import { UpgradeSheet } from "@/components/UpgradeSheet";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { fetchProvider } from "@/lib/api";
 import { getCategory } from "@/lib/categories";
@@ -37,8 +38,15 @@ export function ProfileClient({ id }: { id: string }) {
   const [booking, setBooking] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [owned, setOwned] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
+  const [proJustGranted, setProJustGranted] = useState(false);
 
   useEffect(() => setOwned(ownsListing(id)), [id]);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setProJustGranted(new URLSearchParams(window.location.search).get("pro") === "1");
+    }
+  }, []);
 
   function onReviewSubmitted(review: Review) {
     setProvider((prev) => {
@@ -135,13 +143,30 @@ export function ProfileClient({ id }: { id: string }) {
             {dist !== null && <span>· {formatDistance(dist, location.locale)}</span>}
           </div>
 
+          {proJustGranted && (
+            <div className="mt-4 rounded-2xl border border-green-300 bg-green-50 px-4 py-3 text-sm font-medium text-green-700 dark:border-green-900/50 dark:bg-green-950/40 dark:text-green-300">
+              🎉 You’re Pro! Your listing is now verified and shown at the top of search.
+            </div>
+          )}
+
           {owned && (
-            <Link
-              href={`/available?edit=${provider.id}`}
-              className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-semibold text-accent transition active:scale-95"
-            >
-              ✏️ Edit my listing
-            </Link>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <Link
+                href={`/available?edit=${provider.id}`}
+                className="inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-semibold text-accent transition active:scale-95"
+              >
+                ✏️ Edit my listing
+              </Link>
+              {features.monetization.subscriptions && !provider.verified && (
+                <button
+                  type="button"
+                  onClick={() => setUpgrading(true)}
+                  className="brand-gradient inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-accent-foreground shadow-sm transition active:scale-95"
+                >
+                  ⭐ Go Pro
+                </button>
+              )}
+            </div>
           )}
         </section>
 
@@ -284,6 +309,13 @@ export function ProfileClient({ id }: { id: string }) {
         onClose={() => setReviewing(false)}
         onSubmitted={onReviewSubmitted}
       />
+      {upgrading && (
+        <UpgradeSheet
+          provider={provider}
+          locale={location.locale}
+          onClose={() => setUpgrading(false)}
+        />
+      )}
     </main>
   );
 }

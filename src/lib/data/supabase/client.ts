@@ -28,3 +28,25 @@ export function getSupabase(): SupabaseClient {
   });
   return cached;
 }
+
+let serviceCached: SupabaseClient | null = null;
+
+/**
+ * Server-only client using the SERVICE-ROLE key (bypasses RLS). Used for
+ * trusted, post-payment writes like granting Pro. Throws if no real service
+ * key is configured — so monetization stays inert until you set it up.
+ */
+export function getServiceSupabase(): SupabaseClient {
+  if (serviceCached) return serviceCached;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error(
+      "Service-role key not configured — set SUPABASE_SERVICE_ROLE_KEY to enable Pro grants.",
+    );
+  }
+  serviceCached = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  return serviceCached;
+}
