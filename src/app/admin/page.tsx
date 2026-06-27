@@ -175,14 +175,25 @@ export default function AdminPage() {
             ))}
           </div>
         ) : (
-          <Dashboard stats={stats} />
+          <Dashboard stats={stats} onChanged={load} />
         )}
       </main>
     </div>
   );
 }
 
-function Dashboard({ stats }: { stats: AdminStats }) {
+function Dashboard({ stats, onChanged }: { stats: AdminStats; onChanged: () => void }) {
+  async function del(id: string, label: string) {
+    if (!window.confirm(`Delete "${label}"? This permanently removes the listing.`)) return;
+    const res = await fetch(`/api/admin/providers/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      onChanged();
+    } else {
+      const d = (await res.json().catch(() => ({}))) as { error?: string };
+      window.alert(d.error || "Couldn’t delete that listing.");
+    }
+  }
+
   const newThisWeek = stats.signupsByDay.slice(-7).reduce((s, d) => s + d.count, 0);
   const cards: { icon: string; label: string; value: number; sub?: string }[] = [
     { icon: "📋", label: "Total listings", value: stats.totalListings, sub: `${newThisWeek} new this week` },
@@ -220,14 +231,17 @@ function Dashboard({ stats }: { stats: AdminStats }) {
 
         {/* Recent listings */}
         <section className="rounded-3xl border border-border bg-background p-5">
-          <h2 className="font-semibold">Latest listings</h2>
+          <h2 className="font-semibold">Manage listings</h2>
           {stats.recent.length === 0 ? (
             <p className="mt-4 text-sm text-muted">No listings yet — share your link to get the first ones.</p>
           ) : (
             <ul className="mt-4 space-y-3">
               {stats.recent.map((r) => (
-                <li key={r.id}>
-                  <Link href={`/provider/${r.id}`} className="flex items-center gap-3 transition hover:opacity-80">
+                <li key={r.id} className="flex items-center gap-2">
+                  <Link
+                    href={`/provider/${r.id}`}
+                    className="flex min-w-0 flex-1 items-center gap-3 transition hover:opacity-80"
+                  >
                     <span className="brand-gradient flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-accent-foreground">
                       {getCategory(r.categoryId)?.emoji ?? "•"}
                     </span>
@@ -238,6 +252,14 @@ function Dashboard({ stats }: { stats: AdminStats }) {
                       </span>
                     </span>
                   </Link>
+                  <button
+                    type="button"
+                    onClick={() => del(r.id, r.business || r.name)}
+                    aria-label="Delete listing"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
+                  >
+                    🗑
+                  </button>
                 </li>
               ))}
             </ul>

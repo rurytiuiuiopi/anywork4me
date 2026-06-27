@@ -34,6 +34,8 @@ export interface ProviderRepository {
   setProUntil(id: string, untilISO: string): Promise<void>;
   /** Aggregated numbers for the private owner dashboard. */
   adminStats(): Promise<AdminStats>;
+  /** Owner-only: delete ANY listing from the admin panel (trusted, server-side). */
+  adminDelete(id: string): Promise<void>;
   addReview(providerId: string, input: ReviewInput, ctx: UserContext): Promise<Review>;
   listCategories(ctx: UserContext): Promise<Category[]>;
 }

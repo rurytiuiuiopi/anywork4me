@@ -269,4 +269,12 @@ export class MockProviderRepository implements ProviderRepository {
     const totalReviews = providers.reduce((sum, p) => sum + p.reviewsCount, 0);
     return computeAdminStats(providers, totalReviews);
   }
+
+  async adminDelete(id: string): Promise<void> {
+    const idx = this.registered.findIndex((p) => p.id === id);
+    if (idx !== -1) {
+      this.registered.splice(idx, 1);
+      this.editTokens.delete(id);
+    }
+  }
 }

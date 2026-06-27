@@ -298,4 +298,11 @@ export class SupabaseProviderRepository implements ProviderRepository {
       .select("id", { count: "exact", head: true });
     return computeAdminStats(providers, count ?? 0);
   }
+
+  async adminDelete(id: string): Promise<void> {
+    // Trusted owner action — bypasses RLS via the service-role key.
+    const db = getServiceSupabase();
+    const { error } = await db.from("providers").delete().eq("id", id);
+    if (error) throw new Error(error.message);
+  }
 }
