@@ -96,7 +96,7 @@ export function SearchClient() {
                 className="fm-fade-up"
                 style={{ animationDelay: `${Math.min(i, 12) * 35}ms` }}
               >
-                <ProviderCard result={r} locale={location.locale} />
+                <ProviderCard result={r} locale={location.locale} precise={location.source === "gps"} />
               </li>
             ))}
           </ul>

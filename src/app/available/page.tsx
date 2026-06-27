@@ -25,7 +25,7 @@ function AvailableForm() {
   const router = useRouter();
   const params = useSearchParams();
   const editId = params.get("edit") || "";
-  const { ctx, location } = useLocation();
+  const { ctx, location, usePreciseLocation } = useLocation();
 
   const [name, setName] = useState("");
   const [business, setBusiness] = useState("");
@@ -228,6 +228,28 @@ function AvailableForm() {
       </div>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-6">
+        <button
+          type="button"
+          onClick={usePreciseLocation}
+          className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition ${
+            location.source === "gps"
+              ? "border-green-300 bg-green-50 dark:border-green-900/50 dark:bg-green-950/40"
+              : "border-border bg-surface-2 hover:border-accent/40"
+          }`}
+        >
+          <span className="text-xl">📍</span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold">
+              {location.source === "gps" ? "Exact location pinned ✓" : "Pin my exact location"}
+            </span>
+            <span className="block text-xs text-muted">
+              {location.source === "gps"
+                ? "Customers will see your true distance — that builds trust."
+                : "So nearby customers see how far you really are (recommended)."}
+            </span>
+          </span>
+        </button>
+
         <div>
           <FieldLabel label="Flyer / banner" hint="optional" />
           <label className="brand-gradient relative mt-1 flex aspect-[2/1] w-full cursor-pointer items-center justify-center overflow-hidden rounded-3xl text-accent-foreground shadow-sm transition active:scale-[0.99]">
@@ -348,31 +370,31 @@ function AvailableForm() {
         </div>
 
         <div>
-          <FieldLabel label="Pricing" hint="optional" />
-          <div className="mt-2 flex gap-3">
-            <div className="relative flex-1">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">
-                {location.currency}
-              </span>
-              <input
-                value={priceFrom}
-                onChange={(e) => {
-                  let v = e.target.value.replace(/[^\d.]/g, "");
-                  const dot = v.indexOf(".");
-                  if (dot !== -1) v = v.slice(0, dot + 1) + v.slice(dot + 1).replace(/\./g, "");
-                  if (Number(v) > 100_000_000) v = "100000000";
-                  setPriceFrom(v);
-                }}
-                inputMode="decimal"
-                maxLength={12}
-                placeholder="From"
-                className={`${inputCls} pl-14`}
-              />
-            </div>
+          <FieldLabel label="Your rate" hint="optional" />
+          <div className="mt-2 flex items-stretch gap-2">
+            <span className="flex shrink-0 items-center rounded-2xl border border-border bg-surface px-3.5 text-sm font-semibold text-muted">
+              {location.currency}
+            </span>
+            <input
+              value={priceFrom}
+              onChange={(e) => {
+                let v = e.target.value.replace(/[^\d.]/g, "");
+                const dot = v.indexOf(".");
+                if (dot !== -1) v = v.slice(0, dot + 1) + v.slice(dot + 1).replace(/\./g, "");
+                if (Number(v) > 100_000_000) v = "100000000";
+                setPriceFrom(v);
+              }}
+              inputMode="decimal"
+              maxLength={12}
+              placeholder="e.g. 150"
+              aria-label={`Rate in ${location.currency}`}
+              className={`${inputCls} min-w-0 flex-1`}
+            />
             <select
               value={priceUnit}
               onChange={(e) => setPriceUnit(e.target.value as PricingUnit)}
-              className={`${inputCls} w-32`}
+              aria-label="Rate unit"
+              className={`${inputCls} w-28 shrink-0`}
             >
               {UNITS.map((u) => (
                 <option key={u} value={u}>
@@ -381,6 +403,10 @@ function AvailableForm() {
               ))}
             </select>
           </div>
+          <p className="mt-1.5 text-xs text-muted">
+            Type your rate — e.g. <span className="font-medium">150 per hour</span>. Leave blank to
+            discuss later.
+          </p>
         </div>
 
         {error && (

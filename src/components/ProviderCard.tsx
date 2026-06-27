@@ -12,9 +12,12 @@ import { VerifiedBadge } from "./VerifiedBadge";
 export function ProviderCard({
   result,
   locale = "en",
+  precise = false,
 }: {
   result: SearchResult;
   locale?: string;
+  /** True only when the viewer shared precise GPS — otherwise we show the area, not a fake distance. */
+  precise?: boolean;
 }) {
   const { provider: p, distanceKm } = result;
   const emoji = getCategory(p.categories[0])?.emoji;
@@ -45,7 +48,9 @@ export function ProviderCard({
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
           <Rating rating={p.rating} count={p.reviewsCount} locale={locale} />
           <span className="text-sm text-muted">·</span>
-          <span className="text-sm text-muted">{formatDistance(distanceKm, locale)}</span>
+          <span className="text-sm text-muted">
+            {precise ? formatDistance(distanceKm, locale) : p.location.city}
+          </span>
         </div>
 
         <div className="mt-2 flex items-center justify-between gap-2">

@@ -30,8 +30,10 @@ export function offsetPoint(
 }
 
 export function formatDistance(km: number, locale = "en"): string {
+  // Honest precision: no fabricated minimum. Very close = "just around you".
+  if (km < 0.1) return "just around you";
   if (km < 1) {
-    const m = Math.max(50, Math.round((km * 1000) / 50) * 50);
+    const m = Math.round((km * 1000) / 50) * 50; // nearest 50 m
     return new Intl.NumberFormat(locale).format(m) + " m away";
   }
   const rounded = km < 10 ? Math.round(km * 10) / 10 : Math.round(km);
