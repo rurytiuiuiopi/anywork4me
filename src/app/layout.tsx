@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { RegisterSW } from "@/components/RegisterSW";
+import { NetworkStatus } from "@/components/NetworkStatus";
 import { OG_IMAGE, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/seo";
 
 const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -92,6 +93,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
         />
+        <NetworkStatus />
         <Providers>{children}</Providers>
         <RegisterSW />
       </body>
