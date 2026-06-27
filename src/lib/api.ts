@@ -117,3 +117,20 @@ export async function deleteProvider(id: string, editToken: string): Promise<voi
     throw new Error(data.error ?? "Could not delete listing");
   }
 }
+
+/** Start a Pro upgrade — returns the Paystack checkout URL to redirect to. */
+export async function startUpgrade(id: string, email: string): Promise<string> {
+  const res = await fetch(`/api/providers/${id}/upgrade`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  const data = (await res.json().catch(() => ({}))) as {
+    authorizationUrl?: string;
+    error?: string;
+  };
+  if (!res.ok || !data.authorizationUrl) {
+    throw new Error(data.error ?? "Could not start the upgrade");
+  }
+  return data.authorizationUrl;
+}

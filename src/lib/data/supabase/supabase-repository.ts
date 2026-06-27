@@ -14,7 +14,7 @@ import type {
 import { createClient } from "@supabase/supabase-js";
 import { matchesText, scoreProvider } from "../ranking";
 import type { ProviderRepository } from "../repository";
-import { getSupabase } from "./client";
+import { getServiceSupabase, getSupabase } from "./client";
 
 // Real, persistent backend. Implements the exact same ProviderRepository
 // contract as the mock — so no UI, API route, or component changes were needed
@@ -33,6 +33,9 @@ function rowToProvider(row: any, reviews: Review[] = []): Provider {
   const label = [row.area, row.city].filter(Boolean).join(" · ") || row.city || "";
   // A flyer, when present, is stored as the first `photos` entry (an image ref).
   const banner = isImageRef(row.photos?.[0]) ? row.photos[0] : (row.banner_url ?? undefined);
+  // Pro = pro_until in the future → verified badge + featured (top placement).
+  const proUntil = row.pro_until ?? undefined;
+  const isPro = !!proUntil && new Date(proUntil).getTime() > Date.now();
   return {
     id: row.id,
     name: row.name,
@@ -64,10 +67,11 @@ function rowToProvider(row: any, reviews: Review[] = []): Provider {
     rating: Number(row.rating ?? 0),
     reviewsCount: row.reviews_count ?? 0,
     reviews,
-    tier: row.tier ?? "standard",
-    verified: !!row.verified,
-    featured: !!row.featured,
+    tier: isPro ? "premium" : (row.tier ?? "standard"),
+    verified: isPro || !!row.verified,
+    featured: isPro || !!row.featured,
     sponsored: !!row.sponsored,
+    proUntil,
     createdAt: row.created_at,
   };
 }
@@ -270,5 +274,16 @@ export class SupabaseProviderRepository implements ProviderRepository {
     const { data, error } = await db.from("providers").delete().eq("id", id).select("id");
     if (error) throw new Error(error.message);
     if (!data || data.length === 0) throw new Error("Not authorized to edit this listing.");
+  }
+
+  async setProUntil(id: string, untilISO: string): Promise<void> {
+    // Trusted server write (service role) — only ever called after Paystack
+    // confirms a real payment.
+    const db = getServiceSupabase();
+    const { error } = await db
+      .from("providers")
+      .update({ pro_until: untilISO, tier: "premium" })
+      .eq("id", id);
+    if (error) throw new Error(error.message);
   }
 }

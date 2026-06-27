@@ -40,7 +40,9 @@ export function scoreProvider(
   s += Math.max(0, 12 - distanceKm * 1.5); // proximity, gentle
 
   // Monetization signals — only count when the flags are enabled (Phase 2+).
-  if (features.monetization.premiumPlacement && p.featured) s += 15;
+  // Pro subscribers are flagged `featured`, so the subscriptions switch lifts them.
+  if ((features.monetization.premiumPlacement || features.monetization.subscriptions) && p.featured)
+    s += 15;
   if (features.monetization.sponsoredResults && p.sponsored) s += 10;
   return s;
 }

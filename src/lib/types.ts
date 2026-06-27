@@ -83,6 +83,8 @@ export interface Provider {
   verified: boolean;
   featured: boolean; // premium placement
   sponsored: boolean; // sponsored result
+  /** Pro subscription expiry (ISO). When in the future, the provider is "Pro". */
+  proUntil?: string;
 
   createdAt: string;
 

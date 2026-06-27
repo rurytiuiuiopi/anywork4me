@@ -249,4 +249,13 @@ export class MockProviderRepository implements ProviderRepository {
     this.registered.splice(idx, 1);
     this.editTokens.delete(id);
   }
+
+  async setProUntil(id: string, untilISO: string): Promise<void> {
+    const p = this.registered.find((x) => x.id === id);
+    if (!p) return;
+    p.proUntil = untilISO;
+    p.verified = true;
+    p.featured = true;
+    p.tier = "premium";
+  }
 }
