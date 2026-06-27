@@ -83,7 +83,7 @@ export default function SavedPage() {
           <ul className="space-y-3">
             {results.map((r) => (
               <li key={r.provider.id}>
-                <ProviderCard result={r} locale={location.locale} />
+                <ProviderCard result={r} locale={location.locale} precise={location.source === "gps"} />
               </li>
             ))}
           </ul>

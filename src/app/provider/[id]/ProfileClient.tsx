@@ -149,7 +149,9 @@ export function ProfileClient({ id }: { id: string }) {
               <path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1112 6.5a2.5 2.5 0 010 5z" />
             </svg>
             <span>{provider.location.label}</span>
-            {dist !== null && <span>· {formatDistance(dist, location.locale)}</span>}
+            {location.source === "gps" && dist !== null && (
+              <span>· {formatDistance(dist, location.locale)}</span>
+            )}
           </div>
 
           {proJustGranted && (
