@@ -370,42 +370,37 @@ function AvailableForm() {
         </div>
 
         <div>
-          <FieldLabel label="Your rate" hint="optional" />
-          <div className="mt-2 flex items-stretch gap-2">
-            <span className="flex shrink-0 items-center rounded-2xl border border-border bg-surface px-3.5 text-sm font-semibold text-muted">
-              {location.currency}
-            </span>
-            <input
-              value={priceFrom}
-              onChange={(e) => {
-                let v = e.target.value.replace(/[^\d.]/g, "");
-                const dot = v.indexOf(".");
-                if (dot !== -1) v = v.slice(0, dot + 1) + v.slice(dot + 1).replace(/\./g, "");
-                if (Number(v) > 100_000_000) v = "100000000";
-                setPriceFrom(v);
-              }}
-              inputMode="decimal"
-              maxLength={12}
-              placeholder="e.g. 150"
-              aria-label={`Rate in ${location.currency}`}
-              className={`${inputCls} min-w-0 flex-1`}
-            />
-            <select
-              value={priceUnit}
-              onChange={(e) => setPriceUnit(e.target.value as PricingUnit)}
-              aria-label="Rate unit"
-              className={`${inputCls} w-28 shrink-0`}
-            >
-              {UNITS.map((u) => (
-                <option key={u} value={u}>
-                  per {u}
-                </option>
-              ))}
-            </select>
-          </div>
+          <FieldLabel label={`Your rate (${location.currency})`} hint="optional" />
+          <input
+            value={priceFrom}
+            onChange={(e) => {
+              let v = e.target.value.replace(/[^\d.]/g, "");
+              const dot = v.indexOf(".");
+              if (dot !== -1) v = v.slice(0, dot + 1) + v.slice(dot + 1).replace(/\./g, "");
+              if (Number(v) > 100_000_000) v = "100000000";
+              setPriceFrom(v);
+            }}
+            inputMode="decimal"
+            maxLength={12}
+            placeholder="Tap here to type your amount — e.g. 150"
+            aria-label={`Rate amount in ${location.currency}`}
+            className={`${inputCls} mt-2`}
+          />
+          <select
+            value={priceUnit}
+            onChange={(e) => setPriceUnit(e.target.value as PricingUnit)}
+            aria-label="Rate period"
+            className={`${inputCls} mt-2`}
+          >
+            {UNITS.map((u) => (
+              <option key={u} value={u}>
+                per {u}
+              </option>
+            ))}
+          </select>
           <p className="mt-1.5 text-xs text-muted">
-            Type your rate — e.g. <span className="font-medium">150 per hour</span>. Leave blank to
-            discuss later.
+            Type your amount in the box above, then pick per hour / day / job. Leave blank to discuss
+            later.
           </p>
         </div>
 
