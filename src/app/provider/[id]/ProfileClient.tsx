@@ -7,6 +7,7 @@ import { BookingSheet } from "@/components/BookingSheet";
 import { Rating } from "@/components/Rating";
 import { ReviewSheet } from "@/components/ReviewSheet";
 import { SaveButton } from "@/components/SaveButton";
+import { ShareButton } from "@/components/ShareButton";
 import { Thumb } from "@/components/Thumb";
 import { UpgradeSheet } from "@/components/UpgradeSheet";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -17,6 +18,7 @@ import { features } from "@/lib/config";
 import { formatPricing } from "@/lib/format";
 import { distanceKm, formatDistance } from "@/lib/geo";
 import { useLocation } from "@/lib/location/LocationProvider";
+import { SITE_URL } from "@/lib/seo";
 import type { Provider, Review } from "@/lib/types";
 
 const tel = (phone?: string) => `tel:${(phone ?? "").replace(/\s+/g, "")}`;
@@ -104,7 +106,14 @@ export function ProfileClient({ id }: { id: string }) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 6l-6 6 6 6" />
             </svg>
           </Link>
-          <SaveButton id={provider.id} />
+          <div className="flex items-center gap-2">
+            <ShareButton
+              url={`${SITE_URL}/provider/${provider.id}`}
+              title={provider.business || provider.name}
+              text={`Check out ${provider.business || provider.name} on anywork4me`}
+            />
+            <SaveButton id={provider.id} />
+          </div>
         </div>
         <div className="absolute bottom-3 left-4">
           <span className="rounded-full bg-background/85 px-3 py-1.5 shadow-sm backdrop-blur">
@@ -267,6 +276,19 @@ export function ProfileClient({ id }: { id: string }) {
             )}
           </section>
         )}
+
+        <div className="mt-10 mb-2 text-center">
+          <a
+            href={`mailto:support@anywork4me.com?subject=${encodeURIComponent(
+              `Report listing: ${provider.business || provider.name}`,
+            )}&body=${encodeURIComponent(
+              `Reporting this listing:\n${SITE_URL}/provider/${provider.id}\n\nReason:\n`,
+            )}`}
+            className="text-xs text-muted underline underline-offset-2 transition hover:text-foreground"
+          >
+            ⚑ Report this listing
+          </a>
+        </div>
       </div>
 
       {/* Sticky action bar */}
