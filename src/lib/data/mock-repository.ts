@@ -2,6 +2,7 @@ import { CATEGORIES, matchCategory } from "../categories";
 import { distanceKm, offsetPoint } from "../geo";
 import { DEFAULT_COUNTRY, getCountry } from "../location/countries";
 import type {
+  AdminStats,
   Category,
   Provider,
   ProviderRegistration,
@@ -12,6 +13,7 @@ import type {
   UserContext,
 } from "../types";
 import type { ProviderRepository } from "./repository";
+import { computeAdminStats } from "./admin-stats";
 import { matchesText, scoreProvider } from "./ranking";
 import { SEEDS, type Seed } from "./mock-seeds";
 
@@ -257,5 +259,14 @@ export class MockProviderRepository implements ProviderRepository {
     p.verified = true;
     p.featured = true;
     p.tier = "premium";
+  }
+
+  async adminStats(): Promise<AdminStats> {
+    const providers = [
+      ...this.registered,
+      ...SEEDS.map((s) => this.applyExtra(resolveSeed(s, {}))),
+    ];
+    const totalReviews = providers.reduce((sum, p) => sum + p.reviewsCount, 0);
+    return computeAdminStats(providers, totalReviews);
   }
 }

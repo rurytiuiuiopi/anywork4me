@@ -2,6 +2,7 @@ import { CATEGORIES, matchCategory } from "../../categories";
 import { distanceKm } from "../../geo";
 import { DEFAULT_COUNTRY, getCountry } from "../../location/countries";
 import type {
+  AdminStats,
   Category,
   Provider,
   ProviderRegistration,
@@ -12,6 +13,7 @@ import type {
   UserContext,
 } from "../../types";
 import { createClient } from "@supabase/supabase-js";
+import { computeAdminStats } from "../admin-stats";
 import { matchesText, scoreProvider } from "../ranking";
 import type { ProviderRepository } from "../repository";
 import { getServiceSupabase, getSupabase } from "./client";
@@ -285,5 +287,15 @@ export class SupabaseProviderRepository implements ProviderRepository {
       .update({ pro_until: untilISO, tier: "premium" })
       .eq("id", id);
     if (error) throw new Error(error.message);
+  }
+
+  async adminStats(): Promise<AdminStats> {
+    const supabase = getSupabase();
+    const { data } = await supabase.from("providers").select("*").limit(2000);
+    const providers = (data ?? []).map((r) => rowToProvider(r));
+    const { count } = await supabase
+      .from("reviews")
+      .select("id", { count: "exact", head: true });
+    return computeAdminStats(providers, count ?? 0);
   }
 }
