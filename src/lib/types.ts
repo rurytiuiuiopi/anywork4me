@@ -116,6 +116,25 @@ export interface SearchResult {
   score: number;
 }
 
+/** Aggregated numbers for the private owner dashboard. */
+export interface AdminStats {
+  totalListings: number;
+  availableNow: number;
+  totalReviews: number;
+  proSubscribers: number;
+  categoriesUsed: number;
+  recent: Array<{
+    id: string;
+    name: string;
+    business?: string;
+    categoryId: CategoryId;
+    city: string;
+    createdAt: string;
+  }>;
+  topCategories: Array<{ id: CategoryId; count: number }>;
+  signupsByDay: Array<{ date: string; count: number }>; // last 14 days
+}
+
 export interface ProviderRegistration {
   name: string;
   business?: string;

@@ -1,4 +1,5 @@
 import type {
+  AdminStats,
   Category,
   Provider,
   ProviderRegistration,
@@ -31,6 +32,8 @@ export interface ProviderRepository {
   remove(id: string, editToken: string, ctx: UserContext): Promise<void>;
   /** Server-only: grant/extend Pro after a verified payment (trusted call). */
   setProUntil(id: string, untilISO: string): Promise<void>;
+  /** Aggregated numbers for the private owner dashboard. */
+  adminStats(): Promise<AdminStats>;
   addReview(providerId: string, input: ReviewInput, ctx: UserContext): Promise<Review>;
   listCategories(ctx: UserContext): Promise<Category[]>;
 }
