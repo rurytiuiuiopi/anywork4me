@@ -179,6 +179,7 @@ export class MockProviderRepository implements ProviderRepository {
         ? [input.bannerUrl, `${id}-2`, `${id}-3`]
         : [id, `${id}-2`, `${id}-3`],
       bannerUrl: input.bannerUrl,
+      links: input.links ?? [],
       pricing: input.priceFrom
         ? {
             from: input.priceFrom,
@@ -230,6 +231,7 @@ export class MockProviderRepository implements ProviderRepository {
       location: { ...existing.location, area, label: `${area} · ${existing.location.city}` },
       photos: input.bannerUrl ? [input.bannerUrl, `${id}-2`, `${id}-3`] : existing.photos,
       bannerUrl: input.bannerUrl,
+      links: input.links ?? existing.links ?? [],
       pricing: input.priceFrom
         ? {
             from: input.priceFrom,

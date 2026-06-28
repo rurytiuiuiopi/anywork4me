@@ -13,6 +13,7 @@ import { UpgradeSheet } from "@/components/UpgradeSheet";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { fetchProvider } from "@/lib/api";
 import { getCategory } from "@/lib/categories";
+import { linkMeta } from "@/lib/links";
 import { ownsListing } from "@/lib/ownership";
 import { features } from "@/lib/config";
 import { formatPricing } from "@/lib/format";
@@ -230,6 +231,33 @@ export function ProfileClient({ id }: { id: string }) {
           <section className="mt-6">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">About</h2>
             <p className="mt-2 leading-relaxed">{provider.bio}</p>
+          </section>
+        )}
+
+        {/* Links — see & hear the provider's work */}
+        {provider.links && provider.links.length > 0 && (
+          <section className="mt-6">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Links</h2>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {provider.links.map((url) => {
+                const m = linkMeta(url);
+                return (
+                  <a
+                    key={url}
+                    href={m.url}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow ugc"
+                    className="inline-flex items-center gap-2 rounded-full border border-border bg-surface-2 px-4 py-2 text-sm font-medium transition hover:border-accent/40 active:scale-95"
+                  >
+                    <span aria-hidden>{m.emoji}</span>
+                    <span>{m.label}</span>
+                    <span className="text-muted" aria-hidden>
+                      ↗
+                    </span>
+                  </a>
+                );
+              })}
+            </div>
           </section>
         )}
 

@@ -1,5 +1,6 @@
 import { after, NextResponse } from "next/server";
 import { repository } from "@/lib/data";
+import { cleanLinks } from "@/lib/links";
 import { submitToIndexNow } from "@/lib/indexnow";
 import { SITE_URL } from "@/lib/seo";
 import type { ProviderRegistration } from "@/lib/types";
@@ -62,6 +63,7 @@ export async function POST(req: Request) {
           body.bannerUrl.length < 3_900_000
             ? body.bannerUrl
             : undefined,
+        links: cleanLinks(body.links),
       },
       ctxFromParams(ctxParams),
     );
