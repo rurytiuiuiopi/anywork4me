@@ -239,7 +239,7 @@ export class SupabaseProviderRepository implements ProviderRepository {
   ): Promise<Provider> {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key =
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!url || !key) throw new Error("Supabase not configured.");
 
     // Per-request client carrying the secret token; the RLS "owner can update"
@@ -287,7 +287,7 @@ export class SupabaseProviderRepository implements ProviderRepository {
   async remove(id: string, editToken: string): Promise<void> {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key =
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!url || !key) throw new Error("Supabase not configured.");
 
     const db = createClient(url, key, {
