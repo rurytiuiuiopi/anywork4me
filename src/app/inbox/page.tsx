@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { IconBell, IconPlus } from "@/components/Icons";
+import { SupportThread } from "@/components/SupportThread";
 import { fetchInbox } from "@/lib/api";
 import { getOwnedListings } from "@/lib/ownership";
 import type { Message } from "@/lib/types";
@@ -53,6 +54,12 @@ export default function InboxPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Inbox</h1>
       </header>
 
+      <SupportThread />
+
+      <h2 className="mb-3 mt-6 text-sm font-semibold uppercase tracking-wide text-muted">
+        Bookings &amp; messages
+      </h2>
+
       {messages === null ? (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -60,22 +67,21 @@ export default function InboxPage() {
           ))}
         </div>
       ) : messages.length === 0 ? (
-        <div className="mt-10 flex flex-col items-center gap-3 text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 text-accent">
-            <IconBell className="h-7 w-7" />
+        <div className="flex items-center gap-3 rounded-3xl border border-dashed border-border bg-background p-5">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-accent/10 text-accent">
+            <IconBell className="h-5 w-5" />
           </span>
-          <h2 className="text-lg font-semibold">No messages yet</h2>
-          <p className="max-w-xs text-sm text-muted">
+          <p className="flex-1 text-sm text-muted">
             {hasListings
-              ? "When someone books you or sends a message, it shows up here."
+              ? "No bookings or messages yet — they’ll show up here."
               : "Post a listing and your bookings & messages will land here."}
           </p>
           {!hasListings && (
             <Link
               href="/available"
-              className="brand-gradient mt-1 inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold text-accent-foreground"
+              className="brand-gradient inline-flex shrink-0 items-center gap-1.5 rounded-2xl px-4 py-2 text-sm font-semibold text-accent-foreground"
             >
-              <IconPlus className="h-4 w-4" /> Post a listing
+              <IconPlus className="h-4 w-4" /> Post
             </Link>
           )}
         </div>

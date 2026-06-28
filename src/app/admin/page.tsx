@@ -22,7 +22,7 @@ const NAV: { key: ViewKey; label: string; icon: string; soon?: boolean }[] = [
   { key: "categories", label: "Categories", icon: "🏷️" },
   { key: "reviews", label: "Reviews", icon: "⭐" },
   { key: "revenue", label: "Pro & Revenue", icon: "💳", soon: true },
-  { key: "messages", label: "Messages", icon: "💬", soon: true },
+  { key: "messages", label: "Support", icon: "💬" },
   { key: "settings", label: "Settings", icon: "⚙️" },
 ];
 
@@ -32,7 +32,7 @@ const HEADERS: Record<ViewKey, string> = {
   categories: "What people are offering.",
   reviews: "Ratings across your listings.",
   revenue: "Pro subscriptions & earnings.",
-  messages: "Conversations with customers.",
+  messages: "User support conversations (Sarah).",
   settings: "Security and admin controls.",
 };
 
@@ -228,7 +228,8 @@ export default function AdminPage() {
               {view === "categories" && <Categories stats={stats} />}
               {view === "reviews" && <Reviews stats={stats} />}
               {view === "settings" && <Settings secured={secured} serviceKey={serviceKey} />}
-              {(view === "revenue" || view === "messages") && <ComingSoon title={active.label} />}
+              {view === "messages" && <AdminSupport />}
+              {view === "revenue" && <ComingSoon title={active.label} />}
             </>
           )}
         </div>
@@ -809,6 +810,169 @@ function ComingSoon({ title }: { title: string }) {
         live right now.
       </p>
     </section>
+  );
+}
+
+type SupportThreadSummary = {
+  token: string;
+  name?: string;
+  email?: string;
+  last: string;
+  lastAt: string;
+  unread: number;
+};
+type AdminMsg = { id: string; sender: "system" | "user" | "admin"; body: string; createdAt: string };
+
+function AdminSupport() {
+  const [threads, setThreads] = useState<SupportThreadSummary[] | null>(null);
+  const [err, setErr] = useState(false);
+  const [active, setActive] = useState<SupportThreadSummary | null>(null);
+  const [messages, setMessages] = useState<AdminMsg[] | null>(null);
+  const [reply, setReply] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const loadThreads = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/support");
+      const d = await res.json();
+      if (!res.ok) {
+        setErr(true);
+        setThreads([]);
+        return;
+      }
+      setThreads(d.threads ?? []);
+    } catch {
+      setErr(true);
+      setThreads([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadThreads();
+  }, [loadThreads]);
+
+  async function open(t: SupportThreadSummary) {
+    setActive(t);
+    setMessages(null);
+    const res = await fetch(`/api/admin/support?token=${t.token}`);
+    const d = await res.json();
+    setMessages(d.messages ?? []);
+    loadThreads();
+  }
+
+  async function send(e: React.FormEvent) {
+    e.preventDefault();
+    if (!active || !reply.trim() || sending) return;
+    setSending(true);
+    await fetch("/api/admin/support", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: active.token, body: reply.trim() }),
+    });
+    setReply("");
+    const res = await fetch(`/api/admin/support?token=${active.token}`);
+    setMessages((await res.json()).messages ?? []);
+    setSending(false);
+  }
+
+  if (err) {
+    return (
+      <div className="aw-glass rounded-3xl p-6 text-sm text-muted">
+        Support isn’t set up yet — run the <code>0009_support.sql</code> migration to enable user
+        support threads.
+      </div>
+    );
+  }
+  if (threads === null) return <div className="fm-skeleton h-40 rounded-3xl" />;
+
+  if (active) {
+    return (
+      <div>
+        <button
+          onClick={() => {
+            setActive(null);
+            setMessages(null);
+          }}
+          className="mb-3 text-sm font-semibold text-accent"
+        >
+          ‹ All conversations
+        </button>
+        <div className="aw-glass rounded-3xl p-4">
+          <div className="border-b border-border pb-3">
+            <p className="font-semibold">{active.name || "User"}</p>
+            <p className="text-xs text-muted">{active.email || "—"}</p>
+          </div>
+          <div className="mt-3 max-h-[50vh] space-y-3 overflow-y-auto">
+            {messages === null ? (
+              <div className="fm-skeleton h-16 rounded-2xl" />
+            ) : (
+              messages.map((m) => (
+                <div key={m.id} className={`flex ${m.sender === "user" ? "justify-start" : "justify-end"}`}>
+                  <div
+                    className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm ${
+                      m.sender === "user" ? "bg-surface-2" : "brand-gradient text-accent-foreground"
+                    }`}
+                  >
+                    <p className="mb-0.5 text-xs font-semibold opacity-80">
+                      {m.sender === "user" ? active.name || "User" : "Sarah"}
+                    </p>
+                    <p className="whitespace-pre-wrap leading-relaxed">{m.body}</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          <form onSubmit={send} className="mt-3 flex items-center gap-2">
+            <input
+              value={reply}
+              onChange={(e) => setReply(e.target.value)}
+              placeholder="Reply as Sarah…"
+              className="h-11 min-w-0 flex-1 rounded-2xl border border-border bg-background px-3.5 text-sm outline-none focus:border-accent"
+            />
+            <button
+              type="submit"
+              disabled={sending || !reply.trim()}
+              className="brand-gradient shrink-0 rounded-2xl px-4 py-2.5 text-sm font-semibold text-accent-foreground disabled:opacity-50"
+            >
+              {sending ? "…" : "Send"}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  return threads.length === 0 ? (
+    <div className="aw-glass rounded-3xl p-6 text-center text-sm text-muted">
+      No support conversations yet. New users get a welcome from Sarah automatically.
+    </div>
+  ) : (
+    <ul className="space-y-2">
+      {threads.map((t) => (
+        <li key={t.token}>
+          <button
+            onClick={() => open(t)}
+            className="aw-glass flex w-full items-center gap-3 rounded-3xl p-4 text-left transition hover:border-accent/40"
+          >
+            <span className="brand-gradient flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-semibold text-accent-foreground">
+              {(t.name || "U").slice(0, 1).toUpperCase()}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-2">
+                <span className="truncate font-semibold">{t.name || "User"}</span>
+                {t.email && <span className="truncate text-xs text-muted">{t.email}</span>}
+              </span>
+              <span className="block truncate text-sm text-muted">{t.last}</span>
+            </span>
+            {t.unread > 0 && (
+              <span className="shrink-0 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                {t.unread}
+              </span>
+            )}
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }
 
