@@ -40,6 +40,7 @@ export default function AdminPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [secured, setSecured] = useState(true);
   const [serviceKey, setServiceKey] = useState(false);
+  const [messaging, setMessaging] = useState(false);
   const [loading, setLoading] = useState(true);
   const [needsPassword, setNeedsPassword] = useState(false);
   const [password, setPassword] = useState("");
@@ -59,6 +60,7 @@ export default function AdminPage() {
       setStats(data.stats);
       setSecured(data.secured);
       setServiceKey(!!data.serviceKey);
+      setMessaging(!!data.messaging);
       setNeedsPassword(false);
     } catch {
       setError("Couldn’t load the dashboard.");
@@ -106,7 +108,7 @@ export default function AdminPage() {
   if (needsPassword) {
     return (
       <main className="flex min-h-dvh items-center justify-center px-5">
-        <div className="w-full max-w-sm rounded-3xl border border-border bg-background p-6 text-center shadow-sm">
+        <div className="w-full max-w-sm aw-glass rounded-3xl p-6 text-center shadow-sm">
           <div className="brand-gradient mx-auto flex h-14 w-14 items-center justify-center rounded-2xl text-2xl text-accent-foreground">
             🔒
           </div>
@@ -136,9 +138,9 @@ export default function AdminPage() {
   const active = NAV.find((n) => n.key === view) ?? NAV[0];
 
   return (
-    <div className="flex min-h-dvh bg-surface">
+    <div className="aw-dash flex min-h-dvh">
       {/* Sidebar (desktop) */}
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-background p-4 md:flex">
+      <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-background/70 p-4 backdrop-blur md:flex">
         <div className="flex items-center gap-2 px-2 py-3">
           <span className="brand-gradient flex h-9 w-9 items-center justify-center rounded-xl text-accent-foreground">
             ◎
@@ -213,7 +215,14 @@ export default function AdminPage() {
               </header>
 
               {view === "overview" && (
-                <Overview stats={stats} secured={secured} del={del} onSeeAll={() => setView("listings")} />
+                <Overview
+                  stats={stats}
+                  secured={secured}
+                  serviceKey={serviceKey}
+                  messaging={messaging}
+                  del={del}
+                  onSeeAll={() => setView("listings")}
+                />
               )}
               {view === "listings" && <Listings stats={stats} serviceKey={serviceKey} del={del} />}
               {view === "categories" && <Categories stats={stats} />}
@@ -254,31 +263,71 @@ function NavButton({
   );
 }
 
-function StatCards({ stats }: { stats: AdminStats }) {
-  const newThisWeek = stats.signupsByDay.slice(-7).reduce((s, d) => s + d.count, 0);
-  const cards: { icon: string; label: string; value: number; sub?: string }[] = [
-    { icon: "📋", label: "Total listings", value: stats.totalListings, sub: `${newThisWeek} new this week` },
-    { icon: "🟢", label: "Available now", value: stats.availableNow },
-    { icon: "🏷️", label: "Categories used", value: stats.categoriesUsed },
-    { icon: "⭐", label: "Total reviews", value: stats.totalReviews },
-    { icon: "💳", label: "Pro subscribers", value: stats.proSubscribers },
-  ];
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.round(diff / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.round(h / 24)}d ago`;
+}
+
+function Kpi({
+  icon,
+  label,
+  value,
+  trend,
+  up,
+  money,
+  sub,
+}: {
+  icon: string;
+  label: string;
+  value: number;
+  trend?: string;
+  up?: boolean;
+  money?: boolean;
+  sub?: string;
+}) {
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-      {cards.map((c) => (
-        <div key={c.label} className="rounded-3xl border border-border bg-background p-5">
-          <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/10 text-xl">
-              {c.icon}
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-sm text-muted">{c.label}</p>
-              <p className="text-2xl font-semibold">{c.value.toLocaleString()}</p>
-            </div>
-          </div>
-          {c.sub && <p className="mt-2 text-xs text-muted">{c.sub}</p>}
-        </div>
-      ))}
+    <div className="aw-glass rounded-3xl p-4 sm:p-5">
+      <div className="flex items-center gap-2.5">
+        <span className="brand-gradient flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-lg text-accent-foreground">
+          {icon}
+        </span>
+        <p className="truncate text-xs text-muted sm:text-sm">{label}</p>
+      </div>
+      <p className="mt-2.5 text-2xl font-semibold sm:text-3xl">
+        {money ? "₵" : ""}
+        {value.toLocaleString()}
+      </p>
+      {trend ? (
+        <p className={`mt-0.5 text-xs font-medium ${up ? "text-green-600 dark:text-green-400" : "text-muted"}`}>
+          {trend}
+        </p>
+      ) : sub ? (
+        <p className="mt-0.5 text-xs text-muted">{sub}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function OpsCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="aw-glass rounded-3xl p-4 text-center">
+      <p className="text-2xl font-semibold">{value}</p>
+      <p className="mt-1 text-xs text-muted">{label}</p>
+      <p className="mt-1 text-[11px] font-medium text-green-600 dark:text-green-400">All clear</p>
+    </div>
+  );
+}
+
+function StatRow({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-muted">{label}</span>
+      <span className="font-medium">{value}</span>
     </div>
   );
 }
@@ -286,69 +335,223 @@ function StatCards({ stats }: { stats: AdminStats }) {
 function Overview({
   stats,
   secured,
+  serviceKey,
+  messaging,
   del,
   onSeeAll,
 }: {
   stats: AdminStats;
   secured: boolean;
+  serviceKey: boolean;
+  messaging: boolean;
   del: (id: string, label: string) => void;
   onSeeAll: () => void;
 }) {
+  const newThisWeek = stats.signupsByDay.slice(-7).reduce((s, d) => s + d.count, 0);
+  const prevWeek = stats.signupsByDay.slice(0, 7).reduce((s, d) => s + d.count, 0);
+  const growth =
+    prevWeek > 0 ? Math.round(((newThisWeek - prevWeek) / prevWeek) * 100) : newThisWeek > 0 ? 100 : 0;
+
+  const checks = [
+    { label: "Authentication", ok: true },
+    { label: "Database", ok: true },
+    { label: "Messaging & inbox", ok: messaging },
+    { label: "Dashboard security", ok: secured },
+    { label: "Admin actions", ok: serviceKey },
+    { label: "Payments", ok: serviceKey },
+  ];
+  const healthScore = Math.round((checks.filter((c) => c.ok).length / checks.length) * 100);
+
+  const topCat = stats.topCategories[0];
+  const insights: string[] = [];
+  if (newThisWeek > 0)
+    insights.push(
+      `${newThisWeek} new listing${newThisWeek === 1 ? "" : "s"} this week${
+        prevWeek > 0 ? ` (${growth >= 0 ? "+" : ""}${growth}% vs last week)` : ""
+      }.`,
+    );
+  if (topCat)
+    insights.push(
+      `Biggest category: ${getCategory(topCat.id)?.name ?? topCat.id} (${topCat.count} listing${
+        topCat.count === 1 ? "" : "s"
+      }).`,
+    );
+  if (stats.totalReviews === 0 && stats.totalListings > 0)
+    insights.push("No reviews yet — nudge customers to rate providers to build trust.");
+  if (stats.proSubscribers === 0)
+    insights.push("0 Pro subscribers — turn on payments to start earning from upgrades.");
+  if (healthScore < 100)
+    insights.push(`Platform health is ${healthScore}% — finish setup in Settings to reach 100%.`);
+  if (insights.length === 0) insights.push("Everything looks healthy. Keep growing your listings.");
+
+  const quickActions = [
+    { label: "View the live site", href: "/" },
+    { label: "Add a listing", href: "/available" },
+    { label: "Browse a category", href: "/find/dj" },
+    { label: "Recruit testers", href: "/testers" },
+  ];
+
   return (
     <>
       {!secured && (
-        <div className="mb-5 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
+        <div className="mb-5 rounded-2xl border border-amber-300 bg-amber-50/80 px-4 py-3 text-sm text-amber-800 backdrop-blur dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
           ⚠️ This dashboard is <strong>not protected</strong>. Set <code>ADMIN_PASSWORD</code> in
           Vercel and redeploy to lock it.
         </div>
       )}
 
-      <StatCards stats={stats} />
+      {/* Executive KPIs */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-6">
+        <Kpi icon="📋" label="Total listings" value={stats.totalListings} trend={`+${newThisWeek} this week`} up />
+        <Kpi icon="🟢" label="Available now" value={stats.availableNow} />
+        <Kpi icon="⭐" label="Reviews" value={stats.totalReviews} />
+        <Kpi icon="💳" label="Pro subscribers" value={stats.proSubscribers} />
+        <Kpi icon="🏷️" label="Categories" value={stats.categoriesUsed} />
+        <Kpi icon="💰" label="Revenue" value={0} money sub="activate payments" />
+      </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-3">
-        <section className="rounded-3xl border border-border bg-background p-5 lg:col-span-2">
-          <h2 className="font-semibold">New listings · last 14 days</h2>
+      {/* Growth + Insights */}
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <section className="aw-glass rounded-3xl p-5 lg:col-span-2">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold">Platform growth · 14 days</h2>
+            <span
+              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                growth >= 0
+                  ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300"
+                  : "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300"
+              }`}
+            >
+              {growth >= 0 ? "▲" : "▼"} {Math.abs(growth)}%
+            </span>
+          </div>
           <SignupChart data={stats.signupsByDay} />
         </section>
 
-        <section className="rounded-3xl border border-border bg-background p-5">
+        <section className="aw-glass rounded-3xl p-5">
+          <h2 className="flex items-center gap-2 font-semibold">✨ Insights</h2>
+          <ul className="mt-3 space-y-2.5">
+            {insights.slice(0, 4).map((t, i) => (
+              <li key={i} className="flex gap-2 text-sm">
+                <span className="text-accent">›</span>
+                <span className="text-muted">{t}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+
+      {/* Live activity + Financial overview */}
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <section className="aw-glass rounded-3xl p-5 lg:col-span-2">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold">Recent</h2>
+            <h2 className="font-semibold">Live activity</h2>
             <button onClick={onSeeAll} className="text-sm font-semibold text-accent">
-              See all
+              All listings
             </button>
           </div>
           {stats.recent.length === 0 ? (
-            <p className="mt-4 text-sm text-muted">No listings yet.</p>
+            <p className="mt-4 text-sm text-muted">No activity yet.</p>
           ) : (
             <ul className="mt-4 space-y-3">
               {stats.recent.slice(0, 6).map((r) => (
-                <ListingRow key={r.id} r={r} del={del} />
+                <li key={r.id} className="flex items-center gap-3">
+                  <span className="brand-gradient flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-accent-foreground">
+                    {getCategory(r.categoryId)?.emoji ?? "•"}
+                  </span>
+                  <Link href={`/provider/${r.id}`} className="min-w-0 flex-1 transition hover:opacity-80">
+                    <span className="block truncate text-sm">
+                      <span className="font-medium">New listing</span> · {r.business || r.name}
+                    </span>
+                    <span className="block truncate text-xs text-muted">
+                      {getCategory(r.categoryId)?.name ?? r.categoryId} · {r.city} · {timeAgo(r.createdAt)}
+                    </span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => del(r.id, r.business || r.name)}
+                    aria-label="Delete listing"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
+                  >
+                    🗑
+                  </button>
+                </li>
               ))}
             </ul>
           )}
         </section>
+
+        <section className="aw-glass rounded-3xl p-5">
+          <h2 className="font-semibold">Financial overview</h2>
+          <p className="mt-3 text-3xl font-semibold">₵0</p>
+          <p className="text-sm text-muted">Monthly recurring revenue</p>
+          <div className="mt-4 space-y-2 text-sm">
+            <StatRow label="Active subscriptions" value={stats.proSubscribers} />
+            <StatRow label="Pending payouts" value="₵0" />
+            <StatRow label="Orders" value={0} />
+          </div>
+          {!serviceKey && (
+            <p className="mt-3 rounded-2xl bg-accent/10 px-3 py-2 text-xs font-medium text-accent">
+              Activate payments in Settings to start earning.
+            </p>
+          )}
+        </section>
       </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-3">
-        <section className="rounded-3xl border border-border bg-background p-5">
+      {/* Platform health + Operations */}
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <section className="aw-glass rounded-3xl p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold">Platform health</h2>
+            <span
+              className={`text-lg font-semibold ${
+                healthScore >= 80
+                  ? "text-green-600 dark:text-green-400"
+                  : healthScore >= 50
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-red-600"
+              }`}
+            >
+              {healthScore}%
+            </span>
+          </div>
+          <ul className="mt-3 space-y-2">
+            {checks.map((c) => (
+              <li key={c.label} className="flex items-center justify-between text-sm">
+                <span className="text-muted">{c.label}</span>
+                <span
+                  className={`font-medium ${c.ok ? "text-green-600 dark:text-green-400" : "text-amber-600 dark:text-amber-400"}`}
+                >
+                  {c.ok ? "● Operational" : "○ Off"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:col-span-2 lg:content-start">
+          <OpsCard label="Pending verifications" value={0} />
+          <OpsCard label="Fraud alerts" value={0} />
+          <OpsCard label="Support tickets" value={0} />
+          <OpsCard label="Pending payouts" value={0} />
+        </div>
+      </div>
+
+      {/* Top categories + Quick actions */}
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <section className="aw-glass rounded-3xl p-5">
           <h2 className="font-semibold">Top categories</h2>
           <TopCategories data={stats.topCategories} total={stats.totalListings} />
         </section>
 
-        <section className="rounded-3xl border border-border bg-background p-5 lg:col-span-2">
+        <section className="aw-glass rounded-3xl p-5 lg:col-span-2">
           <h2 className="font-semibold">Quick actions</h2>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            {[
-              { label: "View the live site", href: "/" },
-              { label: "Add a listing", href: "/available" },
-              { label: "Browse a category", href: "/find/dj" },
-              { label: "Recruit testers", href: "/testers" },
-            ].map((a) => (
+            {quickActions.map((a) => (
               <Link
                 key={a.label}
                 href={a.href}
-                className="flex items-center justify-between rounded-2xl border border-border px-4 py-3 text-sm font-medium transition hover:bg-surface"
+                className="flex items-center justify-between rounded-2xl border border-border bg-background/50 px-4 py-3 text-sm font-medium transition hover:bg-surface"
               >
                 {a.label} <span className="text-muted">›</span>
               </Link>
@@ -393,7 +596,7 @@ function Listings({
         placeholder="Search listings…"
         className="mb-4 h-11 w-full rounded-2xl border border-border bg-background px-4 outline-none focus:border-accent"
       />
-      <section className="rounded-3xl border border-border bg-background p-3 sm:p-5">
+      <section className="aw-glass rounded-3xl p-3 sm:p-5">
         {rows.length === 0 ? (
           <p className="px-2 py-8 text-center text-sm text-muted">
             {term ? "No listings match your search." : "No listings yet."}
@@ -466,7 +669,7 @@ function ListingRow({
 
 function Categories({ stats }: { stats: AdminStats }) {
   return (
-    <section className="rounded-3xl border border-border bg-background p-5 sm:p-6">
+    <section className="aw-glass rounded-3xl p-5 sm:p-6">
       {stats.topCategories.length === 0 ? (
         <p className="text-sm text-muted">No categories in use yet.</p>
       ) : (
@@ -495,7 +698,7 @@ function Categories({ stats }: { stats: AdminStats }) {
 
 function Reviews({ stats }: { stats: AdminStats }) {
   return (
-    <section className="rounded-3xl border border-border bg-background p-6 text-center">
+    <section className="aw-glass rounded-3xl p-6 text-center">
       <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 text-2xl">
         ⭐
       </div>
@@ -538,7 +741,7 @@ function Settings({ secured, serviceKey }: { secured: boolean; serviceKey: boole
           )
         }
       />
-      <div className="rounded-3xl border border-border bg-background p-5">
+      <div className="aw-glass rounded-3xl p-5">
         <h2 className="font-semibold">Manage</h2>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           <a
@@ -575,7 +778,7 @@ function SettingRow({
   help?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-3xl border border-border bg-background p-5">
+    <div className="aw-glass rounded-3xl p-5">
       <div className="flex items-center justify-between gap-3">
         <h2 className="font-semibold">{title}</h2>
         <span

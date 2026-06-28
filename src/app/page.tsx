@@ -171,14 +171,19 @@ export default function HomePage() {
           </div>
         </section>
 
-        <footer className="mt-12 flex items-center justify-center gap-3 text-sm text-muted">
-          <Link href="/privacy" className="transition hover:text-foreground">
-            Privacy
-          </Link>
-          <span aria-hidden>·</span>
-          <Link href="/terms" className="transition hover:text-foreground">
-            Terms
-          </Link>
+        <footer className="mt-12 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-muted">
+          {[
+            { label: "Privacy", href: "/privacy" },
+            { label: "Terms", href: "/terms" },
+            { label: "Refunds", href: "/refunds" },
+            { label: "Guidelines", href: "/guidelines" },
+            { label: "Copyright", href: "/copyright" },
+            { label: "Account", href: "/account" },
+          ].map((l) => (
+            <Link key={l.href} href={l.href} className="transition hover:text-foreground">
+              {l.label}
+            </Link>
+          ))}
         </footer>
       </main>
     </div>
