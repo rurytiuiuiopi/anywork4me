@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { repository } from "@/lib/data";
+import { cleanLinks } from "@/lib/links";
 import type { ProviderRegistration } from "@/lib/types";
 import { ctxFromParams } from "../../_ctx";
 
@@ -65,6 +66,7 @@ export async function PATCH(
           body.bannerUrl.length < 3_900_000
             ? body.bannerUrl
             : undefined,
+        links: cleanLinks(body.links),
       },
       body.editToken,
       ctxFromParams(ctxParams),

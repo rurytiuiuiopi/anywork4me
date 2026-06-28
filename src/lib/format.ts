@@ -29,6 +29,8 @@ export function formatMoney(
 const UNIT_LABEL: Record<string, string> = {
   hour: "/hr",
   day: "/day",
+  week: "/wk",
+  month: "/mo",
   job: "/job",
   session: "/session",
   person: "/person",

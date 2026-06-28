@@ -11,7 +11,7 @@ import { fileToBannerDataUrl } from "@/lib/image";
 import { forgetListing, getEditToken, rememberListing } from "@/lib/ownership";
 import type { PricingUnit } from "@/lib/types";
 
-const UNITS: PricingUnit[] = ["hour", "day", "job", "session", "person", "km"];
+const UNITS: PricingUnit[] = ["hour", "day", "week", "month", "job", "session", "person", "km"];
 
 export default function AvailablePage() {
   return (
@@ -37,6 +37,7 @@ function AvailableForm() {
   const [priceFrom, setPriceFrom] = useState("");
   const [priceUnit, setPriceUnit] = useState<PricingUnit>("hour");
   const [bannerUrl, setBannerUrl] = useState("");
+  const [links, setLinks] = useState<string[]>([""]);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +96,7 @@ function AvailableForm() {
         setPriceFrom(p.pricing ? String(p.pricing.from) : "");
         if (p.pricing?.unit) setPriceUnit(p.pricing.unit);
         setBannerUrl(p.bannerUrl ?? "");
+        setLinks(p.links?.length ? p.links : [""]);
         setLoadingEdit(false);
       })
       .catch(() => {
@@ -150,6 +152,7 @@ function AvailableForm() {
       priceFrom: priceFrom ? Number(priceFrom) : undefined,
       priceUnit,
       bannerUrl: bannerUrl || undefined,
+      links: links.map((l) => l.trim()).filter(Boolean),
     };
     try {
       if (isEdit) {
@@ -348,6 +351,51 @@ function AvailableForm() {
             className={`${inputCls} h-auto resize-none py-3`}
           />
         </Field>
+
+        <div>
+          <FieldLabel label="Links to your work" hint="optional" />
+          <p className="mb-2 text-sm text-muted">
+            Spotify, YouTube, Instagram, SoundCloud, a website… so clients can see and hear what you
+            do.
+          </p>
+          <div className="space-y-2">
+            {links.map((l, i) => (
+              <div key={i} className="flex gap-2">
+                <input
+                  value={l}
+                  onChange={(e) =>
+                    setLinks((prev) => prev.map((x, j) => (j === i ? e.target.value : x)))
+                  }
+                  inputMode="url"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  placeholder="e.g. open.spotify.com/artist/…"
+                  className={inputCls}
+                />
+                {links.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setLinks((prev) => prev.filter((_, j) => j !== i))}
+                    aria-label="Remove link"
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-border text-muted transition hover:bg-surface"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          {links.length < 8 && (
+            <button
+              type="button"
+              onClick={() => setLinks((prev) => [...prev, ""])}
+              className="mt-2 text-sm font-semibold text-accent"
+            >
+              + Add another link
+            </button>
+          )}
+        </div>
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="Phone" hint="optional">

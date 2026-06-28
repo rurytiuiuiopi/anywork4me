@@ -56,6 +56,7 @@ function rowToProvider(row: any, reviews: Review[] = []): Provider {
     },
     photos: row.photos?.length ? row.photos : [row.id],
     bannerUrl: banner,
+    links: Array.isArray(row.links) ? row.links : undefined,
     pricing:
       row.price_from != null
         ? {
@@ -205,16 +206,22 @@ export class SupabaseProviderRepository implements ProviderRepository {
     };
     const editToken = globalThis.crypto.randomUUID();
 
-    let { data, error } = await supabase
-      .from("providers")
-      .insert({ ...row, edit_token: editToken })
-      .select("*")
-      .single();
-    // If the edit_token column isn't provisioned yet, register without it so
-    // sign-ups never break (editing simply turns on once the migration runs).
-    if (error && /edit_token/i.test(error.message)) {
-      ({ data, error } = await supabase.from("providers").insert(row).select("*").single());
+    // `links` and `edit_token` are optional columns; if either isn't provisioned
+    // yet, drop it and retry so sign-ups never break before a migration runs.
+    const insertRow: Record<string, unknown> = {
+      ...row,
+      links: input.links ?? [],
+      edit_token: editToken,
+    };
+    let attempt = await supabase.from("providers").insert(insertRow).select("*").single();
+    for (let i = 0; i < 2 && attempt.error; i++) {
+      const m = attempt.error.message;
+      if (/links/i.test(m) && "links" in insertRow) delete insertRow.links;
+      else if (/edit_token/i.test(m) && "edit_token" in insertRow) delete insertRow.edit_token;
+      else break;
+      attempt = await supabase.from("providers").insert(insertRow).select("*").single();
     }
+    const { data, error } = attempt;
     if (error) throw new Error(error.message);
     const provider = rowToProvider(data);
     provider.editToken = data.edit_token ?? undefined;
@@ -255,9 +262,16 @@ export class SupabaseProviderRepository implements ProviderRepository {
       photos: input.bannerUrl
         ? [input.bannerUrl, `${id}-2`, `${id}-3`]
         : [id, `${id}-2`, `${id}-3`],
+      links: input.links ?? [],
     };
 
-    const { data, error } = await db.from("providers").update(patch).eq("id", id).select("*");
+    let res = await db.from("providers").update(patch).eq("id", id).select("*");
+    // If the links column isn't provisioned yet, save the rest so edits work.
+    if (res.error && /links/i.test(res.error.message) && "links" in patch) {
+      delete patch.links;
+      res = await db.from("providers").update(patch).eq("id", id).select("*");
+    }
+    const { data, error } = res;
     if (error) throw new Error(error.message);
     if (!data || data.length === 0) throw new Error("Not authorized to edit this listing.");
     return rowToProvider(data[0]);

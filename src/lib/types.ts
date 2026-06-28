@@ -22,7 +22,15 @@ export interface GeoPoint {
 
 export type AvailabilityStatus = "available" | "busy" | "offline";
 export type ProviderTier = "standard" | "verified" | "premium";
-export type PricingUnit = "hour" | "day" | "job" | "session" | "person" | "km";
+export type PricingUnit =
+  | "hour"
+  | "day"
+  | "week"
+  | "month"
+  | "job"
+  | "session"
+  | "person"
+  | "km";
 
 export interface Pricing {
   from: number;
@@ -70,6 +78,8 @@ export interface Provider {
   photos: string[];
   /** Optional uploaded flyer/banner image shown across the profile hero. */
   bannerUrl?: string;
+  /** Links to the provider's work — Spotify, YouTube, Instagram, portfolio, etc. */
+  links?: string[];
   pricing?: Pricing;
   availability: AvailabilityStatus;
   rating: number; // 0..5 aggregate
@@ -147,4 +157,6 @@ export interface ProviderRegistration {
   priceUnit?: PricingUnit;
   /** Public URL of an uploaded flyer/banner (Supabase Storage). */
   bannerUrl?: string;
+  /** Links to the provider's work — Spotify, YouTube, Instagram, portfolio, etc. */
+  links?: string[];
 }
