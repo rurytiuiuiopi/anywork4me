@@ -15,6 +15,10 @@ export interface LocalProfile {
   bio?: string;
   category?: string; // primary category / skills
   createdAt: string;
+  /** Secret key for this user's support thread with Sarah/Admin. */
+  supportToken?: string;
+  /** True once the auto welcome message has been created (no duplicates). */
+  welcomed?: boolean;
 }
 
 export const ACCOUNT_TYPES: { id: AccountType; label: string; desc: string }[] = [
@@ -48,8 +52,22 @@ export function hasProfile(): boolean {
 
 export function saveProfile(profile: LocalProfile): void {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(KEY, JSON.stringify(profile));
+  // Generate a support thread token once, then preserve it across updates.
+  const prev = getProfile();
+  const next: LocalProfile = {
+    ...profile,
+    supportToken: profile.supportToken ?? prev?.supportToken ?? globalThis.crypto.randomUUID(),
+    welcomed: profile.welcomed ?? prev?.welcomed ?? false,
+  };
+  window.localStorage.setItem(KEY, JSON.stringify(next));
   window.localStorage.setItem(SESSION_KEY, "1"); // creating/updating signs you in
+}
+
+/** Flag that the auto welcome message has been created for this profile. */
+export function markWelcomed(): void {
+  const p = getProfile();
+  if (!p || typeof window === "undefined") return;
+  window.localStorage.setItem(KEY, JSON.stringify({ ...p, welcomed: true }));
 }
 
 export function clearProfile(): void {

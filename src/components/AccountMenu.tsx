@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   IconBookmark,
+  IconChat,
   IconChevron,
   IconGear,
   IconHelp,
@@ -95,6 +96,7 @@ export function AccountMenu({
           <div className="my-2 border-t border-border" />
 
           <MenuLink href="/signup" Icon={IconUser} label="My profile" onClick={() => setOpen(false)} />
+          <MenuLink href="/inbox" Icon={IconChat} label="Messages" onClick={() => setOpen(false)} />
           <MenuLink href="/available" Icon={IconPlus} label="Post a listing" onClick={() => setOpen(false)} />
           <MenuLink href="/saved" Icon={IconBookmark} label="Saved" onClick={() => setOpen(false)} />
           <MenuLink href="/account" Icon={IconGear} label="Account & data" onClick={() => setOpen(false)} />
