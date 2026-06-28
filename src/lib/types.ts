@@ -64,6 +64,10 @@ export interface Message {
   kind: "message" | "booking";
   read: boolean;
   createdAt: string;
+  /** Conversation key (the client's device token). */
+  threadToken?: string;
+  /** Who sent it — 'client' (the enquirer) or 'owner' (the provider replying). */
+  sender?: "client" | "owner";
 }
 
 export interface MessageInput {

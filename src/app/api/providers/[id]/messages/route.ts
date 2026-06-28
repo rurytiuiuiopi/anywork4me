@@ -10,8 +10,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
   const { id } = await params;
 
-  let body: { senderName?: string; senderContact?: string; body?: string; kind?: string } | null =
-    null;
+  let body:
+    | { senderName?: string; senderContact?: string; body?: string; kind?: string; threadToken?: string }
+    | null = null;
   try {
     body = await req.json();
   } catch {
@@ -27,14 +28,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     typeof body?.senderContact === "string" ? body.senderContact.trim().slice(0, 120) : null;
   const kind = body?.kind === "booking" ? "booking" : "message";
 
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const threadToken =
+    typeof body?.threadToken === "string" && UUID.test(body.threadToken) ? body.threadToken : null;
+
   try {
-    const { error } = await getSupabase().from("messages").insert({
+    const db = getSupabase();
+    const baseRow = {
       listing_id: id,
       sender_name: senderName.slice(0, 80),
       sender_contact: contact || null,
       body: text.slice(0, 2000),
       kind,
-    });
+    };
+    let { error } = await db
+      .from("messages")
+      .insert({ ...baseRow, thread_token: threadToken, sender: "client" });
+    // Graceful: if the thread columns aren't provisioned yet, send without them.
+    if (error && /thread_token|sender|column/i.test(error.message)) {
+      ({ error } = await db.from("messages").insert(baseRow));
+    }
     if (error) throw new Error(error.message);
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch {

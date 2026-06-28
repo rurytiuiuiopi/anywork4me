@@ -60,8 +60,12 @@ export function NotificationBell() {
       if (ownsListings) {
         try {
           const r = await fetchInbox(owned);
-          listingMsgs = r.messages.filter((m) => !m.read && m.kind === "message").length;
-          bookingUnread = r.messages.filter((m) => !m.read && m.kind === "booking").length;
+          listingMsgs = r.messages.filter(
+            (m) => !m.read && m.kind === "message" && m.sender !== "owner",
+          ).length;
+          bookingUnread = r.messages.filter(
+            (m) => !m.read && m.kind === "booking" && m.sender !== "owner",
+          ).length;
         } catch {
           /* ignore */
         }
