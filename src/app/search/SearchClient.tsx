@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CardSkeletonList } from "@/components/CardSkeleton";
 import { LocationControl } from "@/components/LocationControl";
+import { NotificationBell } from "@/components/NotificationBell";
 import { ProviderCard } from "@/components/ProviderCard";
 import { SearchBar } from "@/components/SearchBar";
 import { searchProviders } from "@/lib/api";
@@ -57,6 +58,7 @@ export function SearchClient() {
           <div className="flex-1">
             <SearchBar size="md" initialQuery={q} placeholder={cat ? `Search in ${cat.name}…` : "Search…"} />
           </div>
+          <NotificationBell />
         </div>
       </header>
 
