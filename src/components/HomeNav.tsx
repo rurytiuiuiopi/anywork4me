@@ -6,7 +6,8 @@ import { useEffect, useState } from "react";
 import { AccountMenu } from "@/components/AccountMenu";
 import { Brand } from "@/components/Brand";
 import { IconPlus } from "@/components/Icons";
-import { getProfile, isSignedIn, signOut, type LocalProfile } from "@/lib/profile";
+import { signOutAuth } from "@/lib/auth";
+import { getProfile, isSignedIn, type LocalProfile } from "@/lib/profile";
 
 export function HomeNav() {
   const router = useRouter();
@@ -16,8 +17,8 @@ export function HomeNav() {
     setProfile(isSignedIn() ? getProfile() : null);
   }, []);
 
-  function handleSignOut() {
-    signOut();
+  async function handleSignOut() {
+    await signOutAuth();
     setProfile(null);
     router.push("/");
   }

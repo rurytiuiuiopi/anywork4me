@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { IconArrowRight, IconCamera, IconPlus, IconUser } from "@/components/Icons";
 import { LocationControl } from "@/components/LocationControl";
+import { signOutAuth, signUpWithPassword } from "@/lib/auth";
 import { CATEGORIES } from "@/lib/categories";
 import { fileToBannerDataUrl } from "@/lib/image";
 import { useLocation } from "@/lib/location/LocationProvider";
@@ -14,8 +15,6 @@ import {
   type LocalProfile,
   getProfile,
   isSignedIn,
-  saveProfile,
-  signOut,
 } from "@/lib/profile";
 
 const inputCls =
@@ -30,11 +29,14 @@ export default function SignupPage() {
   const [business, setBusiness] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [accountType, setAccountType] = useState<AccountType | "">("");
   const [bio, setBio] = useState("");
   const [category, setCategory] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [sentTo, setSentTo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -58,26 +60,64 @@ export default function SignupPage() {
     }
   }
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim() || !accountType) return;
-    const profile: LocalProfile = {
-      name: name.trim(),
-      business: business.trim() || undefined,
-      accountType,
-      email: email.trim() || undefined,
-      phone: phone.trim() || undefined,
-      city: location.city,
-      photoUrl: photoUrl || undefined,
-      bio: bio.trim() || undefined,
-      category: category || undefined,
-      createdAt: new Date().toISOString(),
-    };
-    saveProfile(profile);
-    router.push("/available");
+    if (!name.trim() || !accountType || !email.trim() || password.length < 6) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const { needsConfirm } = await signUpWithPassword(email, password, {
+        name: name.trim(),
+        business: business.trim() || undefined,
+        accountType,
+        phone: phone.trim() || undefined,
+        city: location.city,
+        bio: bio.trim() || undefined,
+        category: category || undefined,
+        photoUrl: photoUrl || undefined,
+      });
+      if (needsConfirm) {
+        setSentTo(email.trim());
+        setBusy(false);
+      } else {
+        router.push("/available");
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      setError(
+        /already registered|already exists|already been/i.test(msg)
+          ? "That email already has an account — try signing in instead."
+          : msg || "Couldn’t create your account.",
+      );
+      setBusy(false);
+    }
   }
 
-  // ── Returning visitor (profile already on this device) ──────────────────
+  // ── Email confirmation sent ─────────────────────────────────────────────
+  if (sentTo) {
+    return (
+      <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-5 py-10 text-center">
+        <div className="rounded-4xl border border-border bg-background p-7 shadow-sm">
+          <div className="brand-gradient mx-auto flex h-14 w-14 items-center justify-center rounded-2xl text-2xl text-accent-foreground">
+            ✉️
+          </div>
+          <h1 className="mt-4 text-2xl font-semibold">Confirm your email</h1>
+          <p className="mt-2 text-muted">
+            We sent a link to <strong>{sentTo}</strong>. Click it to activate your account, then sign
+            in.
+          </p>
+          <Link
+            href="/signin"
+            className="brand-gradient mt-6 inline-flex w-full items-center justify-center rounded-2xl py-3.5 font-semibold text-accent-foreground"
+          >
+            Go to sign in
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  // ── Returning visitor (signed in on this device) ────────────────────────
   if (existing) {
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-5 py-10">
@@ -91,7 +131,7 @@ export default function SignupPage() {
             )}
           </div>
           <h1 className="mt-4 text-2xl font-semibold">Welcome back, {existing.name.split(" ")[0]}</h1>
-          <p className="mt-1 text-muted">You’re ready to post and connect.</p>
+          <p className="mt-1 text-muted">You’re signed in and ready to post.</p>
           <div className="mt-6 space-y-2">
             <Link
               href="/available"
@@ -106,31 +146,23 @@ export default function SignupPage() {
               Browse opportunities
             </Link>
           </div>
-          <div className="mt-4 flex items-center justify-center gap-5">
-            <button
-              type="button"
-              onClick={() => setExisting(null)}
-              className="text-sm font-medium text-muted underline underline-offset-2"
-            >
-              Edit my profile
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                signOut();
-                router.push("/");
-              }}
-              className="text-sm font-medium text-muted underline underline-offset-2"
-            >
-              Sign out
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              await signOutAuth();
+              router.push("/");
+            }}
+            className="mt-4 text-sm font-medium text-muted underline underline-offset-2"
+          >
+            Sign out
+          </button>
         </div>
       </main>
     );
   }
 
-  const canSubmit = !!name.trim() && !!accountType;
+  const canSubmit =
+    !!name.trim() && !!accountType && !!email.trim() && password.length >= 6 && !busy;
 
   return (
     <main className="mx-auto min-h-dvh w-full max-w-md px-5 pb-16">
@@ -148,13 +180,13 @@ export default function SignupPage() {
       </header>
 
       <div className="pt-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Create your profile</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Create your account</h1>
         <p className="mt-2 text-muted">
-          One quick step, then you can post a listing and people can find you.
+          Sign up with your email and a password, then post a listing.
         </p>
       </div>
 
-      <form onSubmit={onSubmit} className="mt-7 space-y-6">
+      <form onSubmit={onSubmit} className="mt-7 space-y-6" autoComplete="on">
         {/* Photo */}
         <div className="flex items-center gap-4">
           <label className="relative flex h-20 w-20 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-accent/10 text-accent transition active:scale-95">
@@ -197,29 +229,46 @@ export default function SignupPage() {
         </div>
 
         <Field label="Full name" required>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Yvonne Christie" className={inputCls} required />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Yvonne Christie" autoComplete="name" className={inputCls} required />
         </Field>
 
         <Field label="Business name" hint="optional">
           <input value={business} onChange={(e) => setBusiness(e.target.value)} placeholder="e.g. Pulse Sound" className={inputCls} />
         </Field>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Phone" hint="optional">
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder={`${location.city} number`} className={inputCls} />
-          </Field>
-          <Field label="Email" hint="optional">
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              inputMode="email"
-              autoCapitalize="none"
-              autoCorrect="off"
-              placeholder="you@email.com"
-              className={inputCls}
-            />
-          </Field>
-        </div>
+        <Field label="Email" required>
+          <input
+            type="email"
+            name="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            inputMode="email"
+            autoComplete="email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            placeholder="you@email.com"
+            required
+            className={inputCls}
+          />
+        </Field>
+
+        <Field label="Password" required>
+          <input
+            type="password"
+            name="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+            autoComplete="new-password"
+            placeholder="At least 6 characters"
+            className={inputCls}
+          />
+        </Field>
+
+        <Field label="Phone" hint="optional">
+          <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" autoComplete="tel" placeholder={`${location.city} number`} className={inputCls} />
+        </Field>
 
         <Field label="What do you do?" hint="optional">
           <select value={category} onChange={(e) => setCategory(e.target.value)} className={inputCls}>
@@ -253,10 +302,13 @@ export default function SignupPage() {
           disabled={!canSubmit}
           className="brand-gradient flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-base font-semibold text-accent-foreground transition active:scale-[0.99] disabled:opacity-40"
         >
-          Create profile <IconArrowRight className="h-5 w-5" />
+          {busy ? "Creating account…" : "Create account"} <IconArrowRight className="h-5 w-5" />
         </button>
-        <p className="text-center text-xs text-muted">
-          No passwords. Your profile is saved on this device so posting stays quick.
+        <p className="text-center text-sm text-muted">
+          Already have an account?{" "}
+          <Link href="/signin" className="font-semibold text-accent">
+            Sign in
+          </Link>
         </p>
       </form>
     </main>

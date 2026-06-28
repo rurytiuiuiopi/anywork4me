@@ -64,21 +64,3 @@ export function isSignedIn(): boolean {
   return !!getProfile() && window.localStorage.getItem(SESSION_KEY) === "1";
 }
 
-export function signOut(): void {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem(SESSION_KEY); // keep the profile, just end the session
-}
-
-/** Sign in with the email tied to the saved profile on this device. */
-export function signIn(email: string): "ok" | "no-account" | "mismatch" {
-  const p = getProfile();
-  if (!p) return "no-account";
-  const entered = email.trim().toLowerCase();
-  if (p.email && p.email.toLowerCase() !== entered) return "mismatch";
-  if (!p.email) {
-    p.email = email.trim();
-    window.localStorage.setItem(KEY, JSON.stringify(p));
-  }
-  window.localStorage.setItem(SESSION_KEY, "1");
-  return "ok";
-}

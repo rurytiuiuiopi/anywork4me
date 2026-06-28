@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { RegisterSW } from "@/components/RegisterSW";
+import { AuthSync } from "@/components/AuthSync";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { OG_IMAGE, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/seo";
 
@@ -95,6 +96,7 @@ export default function RootLayout({
         />
         <NetworkStatus />
         <Providers>{children}</Providers>
+        <AuthSync />
         <RegisterSW />
       </body>
     </html>
