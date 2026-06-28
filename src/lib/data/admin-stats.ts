@@ -22,13 +22,14 @@ export function computeAdminStats(providers: Provider[], totalReviews: number): 
 
   const recent = [...providers]
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
-    .slice(0, 6)
+    .slice(0, 100)
     .map((p) => ({
       id: p.id,
       name: p.name,
       business: p.business,
       categoryId: p.categories[0],
       city: p.location.city,
+      availability: p.availability,
       createdAt: p.createdAt,
     }));
 

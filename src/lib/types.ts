@@ -139,6 +139,7 @@ export interface AdminStats {
     business?: string;
     categoryId: CategoryId;
     city: string;
+    availability: AvailabilityStatus;
     createdAt: string;
   }>;
   topCategories: Array<{ id: CategoryId; count: number }>;
