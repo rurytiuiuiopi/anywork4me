@@ -1,4 +1,6 @@
 import type {
+  Message,
+  MessageInput,
   Provider,
   ProviderRegistration,
   Review,
@@ -69,6 +71,32 @@ export async function submitReview(
   }
   const data = (await res.json()) as { review: Review };
   return data.review;
+}
+
+export async function sendMessage(providerId: string, input: MessageInput): Promise<void> {
+  const res = await fetch(`/api/providers/${providerId}/messages`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error ?? "Could not send your message");
+  }
+}
+
+export async function fetchInbox(
+  owned: { id: string; token: string }[],
+  markRead = false,
+): Promise<{ messages: Message[]; unread: number }> {
+  if (owned.length === 0) return { messages: [], unread: 0 };
+  const res = await fetch(`/api/inbox`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ owned, markRead }),
+  });
+  if (!res.ok) return { messages: [], unread: 0 };
+  return (await res.json()) as { messages: Message[]; unread: number };
 }
 
 export async function registerProvider(

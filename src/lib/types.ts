@@ -55,6 +55,24 @@ export interface ReviewInput {
   comment: string;
 }
 
+export interface Message {
+  id: string;
+  listingId: string;
+  senderName: string;
+  senderContact?: string; // phone/email so the owner can reply
+  body: string;
+  kind: "message" | "booking";
+  read: boolean;
+  createdAt: string;
+}
+
+export interface MessageInput {
+  senderName: string;
+  senderContact?: string;
+  body: string;
+  kind?: "message" | "booking";
+}
+
 export interface ProviderLocation {
   /** Human label, e.g. "Old Town · Accra". */
   label: string;
