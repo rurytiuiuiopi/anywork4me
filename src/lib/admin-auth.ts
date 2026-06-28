@@ -16,11 +16,18 @@ export function adminToken(): string {
   return crypto.createHash("sha256").update(PW ?? "").digest("hex");
 }
 
+/** Constant-time string comparison (hash both sides → equal-length buffers). */
+function safeEqual(a: string, b: string): boolean {
+  const ab = crypto.createHash("sha256").update(a).digest();
+  const bb = crypto.createHash("sha256").update(b).digest();
+  return crypto.timingSafeEqual(ab, bb);
+}
+
 export function checkPassword(password: string): boolean {
-  return adminSecured() && password === PW;
+  return adminSecured() && safeEqual(password, PW ?? "");
 }
 
 export function isAuthed(cookieValue: string | undefined): boolean {
   if (!adminSecured()) return true; // not locked yet
-  return cookieValue === adminToken();
+  return cookieValue != null && safeEqual(cookieValue, adminToken());
 }

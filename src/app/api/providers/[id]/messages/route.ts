@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { getSupabase } from "@/lib/data/supabase/client";
+import { clientKey, rateLimit } from "@/lib/rate-limit";
 
 // POST /api/providers/:id/messages — send a message (or booking) to a listing.
 // Public: clients don't need an account. The listing owner reads it in /inbox.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!rateLimit(clientKey(req, "message"), 12, 60_000)) {
+    return NextResponse.json({ error: "You’re sending too fast. Try again shortly." }, { status: 429 });
+  }
   const { id } = await params;
 
   let body: { senderName?: string; senderContact?: string; body?: string; kind?: string } | null =
