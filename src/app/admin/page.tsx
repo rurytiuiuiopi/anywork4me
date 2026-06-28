@@ -7,25 +7,45 @@ import type { AdminStats } from "@/lib/types";
 
 const COLORS = ["#4f46e5", "#14b8a6", "#ec4899", "#a855f7", "#f59e0b", "#94a3b8"];
 
-const NAV: { label: string; icon: string; active?: boolean; soon?: boolean }[] = [
-  { label: "Dashboard", icon: "▦", active: true },
-  { label: "Listings", icon: "👤", soon: true },
-  { label: "Categories", icon: "🏷️", soon: true },
-  { label: "Reviews", icon: "⭐", soon: true },
-  { label: "Pro & Revenue", icon: "💳", soon: true },
-  { label: "Messages", icon: "💬", soon: true },
-  { label: "Reports", icon: "🚩", soon: true },
-  { label: "Settings", icon: "⚙️", soon: true },
+type ViewKey =
+  | "overview"
+  | "listings"
+  | "categories"
+  | "reviews"
+  | "revenue"
+  | "messages"
+  | "settings";
+
+const NAV: { key: ViewKey; label: string; icon: string; soon?: boolean }[] = [
+  { key: "overview", label: "Dashboard", icon: "▦" },
+  { key: "listings", label: "Listings", icon: "📋" },
+  { key: "categories", label: "Categories", icon: "🏷️" },
+  { key: "reviews", label: "Reviews", icon: "⭐" },
+  { key: "revenue", label: "Pro & Revenue", icon: "💳", soon: true },
+  { key: "messages", label: "Messages", icon: "💬", soon: true },
+  { key: "settings", label: "Settings", icon: "⚙️" },
 ];
+
+const HEADERS: Record<ViewKey, string> = {
+  overview: "Here’s what’s happening on anywork4me.",
+  listings: "View and manage every listing.",
+  categories: "What people are offering.",
+  reviews: "Ratings across your listings.",
+  revenue: "Pro subscriptions & earnings.",
+  messages: "Conversations with customers.",
+  settings: "Security and admin controls.",
+};
 
 export default function AdminPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [secured, setSecured] = useState(true);
+  const [serviceKey, setServiceKey] = useState(false);
   const [loading, setLoading] = useState(true);
   const [needsPassword, setNeedsPassword] = useState(false);
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<ViewKey>("overview");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -38,6 +58,7 @@ export default function AdminPage() {
       const data = await res.json();
       setStats(data.stats);
       setSecured(data.secured);
+      setServiceKey(!!data.serviceKey);
       setNeedsPassword(false);
     } catch {
       setError("Couldn’t load the dashboard.");
@@ -71,6 +92,17 @@ export default function AdminPage() {
     }
   }
 
+  async function del(id: string, label: string) {
+    if (!window.confirm(`Delete "${label}"? This permanently removes the listing.`)) return;
+    const res = await fetch(`/api/admin/providers/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      load();
+    } else {
+      const d = (await res.json().catch(() => ({}))) as { error?: string };
+      window.alert(d.error || "Couldn’t delete that listing.");
+    }
+  }
+
   if (needsPassword) {
     return (
       <main className="flex min-h-dvh items-center justify-center px-5">
@@ -101,9 +133,11 @@ export default function AdminPage() {
     );
   }
 
+  const active = NAV.find((n) => n.key === view) ?? NAV[0];
+
   return (
     <div className="flex min-h-dvh bg-surface">
-      {/* Sidebar */}
+      {/* Sidebar (desktop) */}
       <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-background p-4 md:flex">
         <div className="flex items-center gap-2 px-2 py-3">
           <span className="brand-gradient flex h-9 w-9 items-center justify-center rounded-xl text-accent-foreground">
@@ -115,85 +149,112 @@ export default function AdminPage() {
         </div>
         <nav className="mt-4 flex-1 space-y-1">
           {NAV.map((n) => (
-            <div
-              key={n.label}
-              className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium ${
-                n.active ? "bg-accent/10 text-accent" : "text-muted"
-              }`}
-            >
-              <span className="w-5 text-center">{n.icon}</span>
-              <span className="flex-1">{n.label}</span>
-              {n.soon && (
-                <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] text-muted">soon</span>
-              )}
-            </div>
+            <NavButton key={n.key} item={n} active={view === n.key} onClick={() => setView(n.key)} />
           ))}
           <Link
             href="/"
-            className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-muted transition hover:bg-surface"
+            className="mt-1 flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-muted transition hover:bg-surface"
           >
             <span className="w-5 text-center">↩</span> Back to site
           </Link>
         </nav>
-        <div className="mt-auto flex items-center gap-3 rounded-2xl border border-border p-3">
-          <span className="brand-gradient flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-accent-foreground">
-            A
-          </span>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">Owner</p>
-            <p className="truncate text-xs text-muted">anywork4me admin</p>
-          </div>
-        </div>
       </aside>
 
       {/* Main */}
-      <main className="min-w-0 flex-1 p-5 sm:p-8">
-        <header className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-            <p className="mt-1 text-muted">Here’s what’s happening on anywork4me.</p>
+      <main className="min-w-0 flex-1">
+        {/* Mobile top bar + nav */}
+        <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur md:hidden">
+          <div className="flex items-center justify-between px-4 py-3">
+            <span className="text-base font-semibold tracking-tight">
+              anywork<span className="text-accent">4me</span>
+            </span>
+            <Link href="/" className="text-sm font-medium text-muted">
+              View site ↗
+            </Link>
           </div>
-          <Link
-            href="/available"
-            className="brand-gradient rounded-2xl px-4 py-2.5 text-sm font-semibold text-accent-foreground shadow-sm"
-          >
-            + Add a listing
-          </Link>
-        </header>
-
-        {!secured && (
-          <div className="mt-5 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
-            ⚠️ This dashboard is <strong>not protected</strong>. Set <code>ADMIN_PASSWORD</code> in
-            your hosting env (Vercel) and redeploy to lock it to just you.
-          </div>
-        )}
-
-        {loading || !stats ? (
-          <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="fm-skeleton h-24 rounded-3xl" />
+          <div className="no-scrollbar flex gap-2 overflow-x-auto px-4 pb-3">
+            {NAV.map((n) => (
+              <button
+                key={n.key}
+                type="button"
+                onClick={() => setView(n.key)}
+                className={`shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
+                  view === n.key
+                    ? "border-accent bg-accent/10 text-accent"
+                    : "border-border bg-surface-2 text-muted"
+                }`}
+              >
+                {n.label}
+              </button>
             ))}
           </div>
-        ) : (
-          <Dashboard stats={stats} onChanged={load} />
-        )}
+        </div>
+
+        <div className="p-5 sm:p-8">
+          {loading || !stats ? (
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="fm-skeleton h-24 rounded-3xl" />
+              ))}
+            </div>
+          ) : (
+            <>
+              <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{active.label}</h1>
+                  <p className="mt-1 text-muted">{HEADERS[view]}</p>
+                </div>
+                <Link
+                  href="/available"
+                  className="brand-gradient rounded-2xl px-4 py-2.5 text-sm font-semibold text-accent-foreground shadow-sm"
+                >
+                  + Add a listing
+                </Link>
+              </header>
+
+              {view === "overview" && (
+                <Overview stats={stats} secured={secured} del={del} onSeeAll={() => setView("listings")} />
+              )}
+              {view === "listings" && <Listings stats={stats} serviceKey={serviceKey} del={del} />}
+              {view === "categories" && <Categories stats={stats} />}
+              {view === "reviews" && <Reviews stats={stats} />}
+              {view === "settings" && <Settings secured={secured} serviceKey={serviceKey} />}
+              {(view === "revenue" || view === "messages") && <ComingSoon title={active.label} />}
+            </>
+          )}
+        </div>
       </main>
     </div>
   );
 }
 
-function Dashboard({ stats, onChanged }: { stats: AdminStats; onChanged: () => void }) {
-  async function del(id: string, label: string) {
-    if (!window.confirm(`Delete "${label}"? This permanently removes the listing.`)) return;
-    const res = await fetch(`/api/admin/providers/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      onChanged();
-    } else {
-      const d = (await res.json().catch(() => ({}))) as { error?: string };
-      window.alert(d.error || "Couldn’t delete that listing.");
-    }
-  }
+function NavButton({
+  item,
+  active,
+  onClick,
+}: {
+  item: { label: string; icon: string; soon?: boolean };
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition ${
+        active ? "bg-accent/10 text-accent" : "text-muted hover:bg-surface"
+      }`}
+    >
+      <span className="w-5 text-center">{item.icon}</span>
+      <span className="flex-1">{item.label}</span>
+      {item.soon && (
+        <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] text-muted">soon</span>
+      )}
+    </button>
+  );
+}
 
+function StatCards({ stats }: { stats: AdminStats }) {
   const newThisWeek = stats.signupsByDay.slice(-7).reduce((s, d) => s + d.count, 0);
   const cards: { icon: string; label: string; value: number; sub?: string }[] = [
     { icon: "📋", label: "Total listings", value: stats.totalListings, sub: `${newThisWeek} new this week` },
@@ -202,65 +263,67 @@ function Dashboard({ stats, onChanged }: { stats: AdminStats; onChanged: () => v
     { icon: "⭐", label: "Total reviews", value: stats.totalReviews },
     { icon: "💳", label: "Pro subscribers", value: stats.proSubscribers },
   ];
+  return (
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+      {cards.map((c) => (
+        <div key={c.label} className="rounded-3xl border border-border bg-background p-5">
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/10 text-xl">
+              {c.icon}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-sm text-muted">{c.label}</p>
+              <p className="text-2xl font-semibold">{c.value.toLocaleString()}</p>
+            </div>
+          </div>
+          {c.sub && <p className="mt-2 text-xs text-muted">{c.sub}</p>}
+        </div>
+      ))}
+    </div>
+  );
+}
 
+function Overview({
+  stats,
+  secured,
+  del,
+  onSeeAll,
+}: {
+  stats: AdminStats;
+  secured: boolean;
+  del: (id: string, label: string) => void;
+  onSeeAll: () => void;
+}) {
   return (
     <>
-      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
-        {cards.map((c) => (
-          <div key={c.label} className="rounded-3xl border border-border bg-background p-5">
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/10 text-xl">
-                {c.icon}
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-sm text-muted">{c.label}</p>
-                <p className="text-2xl font-semibold">{c.value.toLocaleString()}</p>
-              </div>
-            </div>
-            {c.sub && <p className="mt-2 text-xs text-muted">{c.sub}</p>}
-          </div>
-        ))}
-      </div>
+      {!secured && (
+        <div className="mb-5 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
+          ⚠️ This dashboard is <strong>not protected</strong>. Set <code>ADMIN_PASSWORD</code> in
+          Vercel and redeploy to lock it.
+        </div>
+      )}
+
+      <StatCards stats={stats} />
 
       <div className="mt-5 grid gap-5 lg:grid-cols-3">
-        {/* Signups chart */}
         <section className="rounded-3xl border border-border bg-background p-5 lg:col-span-2">
           <h2 className="font-semibold">New listings · last 14 days</h2>
           <SignupChart data={stats.signupsByDay} />
         </section>
 
-        {/* Recent listings */}
         <section className="rounded-3xl border border-border bg-background p-5">
-          <h2 className="font-semibold">Manage listings</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold">Recent</h2>
+            <button onClick={onSeeAll} className="text-sm font-semibold text-accent">
+              See all
+            </button>
+          </div>
           {stats.recent.length === 0 ? (
-            <p className="mt-4 text-sm text-muted">No listings yet — share your link to get the first ones.</p>
+            <p className="mt-4 text-sm text-muted">No listings yet.</p>
           ) : (
             <ul className="mt-4 space-y-3">
-              {stats.recent.map((r) => (
-                <li key={r.id} className="flex items-center gap-2">
-                  <Link
-                    href={`/provider/${r.id}`}
-                    className="flex min-w-0 flex-1 items-center gap-3 transition hover:opacity-80"
-                  >
-                    <span className="brand-gradient flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-accent-foreground">
-                      {getCategory(r.categoryId)?.emoji ?? "•"}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium">{r.business || r.name}</span>
-                      <span className="block truncate text-xs text-muted">
-                        {getCategory(r.categoryId)?.name ?? r.categoryId} · {r.city}
-                      </span>
-                    </span>
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => del(r.id, r.business || r.name)}
-                    aria-label="Delete listing"
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
-                  >
-                    🗑
-                  </button>
-                </li>
+              {stats.recent.slice(0, 6).map((r) => (
+                <ListingRow key={r.id} r={r} del={del} />
               ))}
             </ul>
           )}
@@ -268,13 +331,11 @@ function Dashboard({ stats, onChanged }: { stats: AdminStats; onChanged: () => v
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-3">
-        {/* Top categories */}
         <section className="rounded-3xl border border-border bg-background p-5">
           <h2 className="font-semibold">Top categories</h2>
           <TopCategories data={stats.topCategories} total={stats.totalListings} />
         </section>
 
-        {/* Quick actions */}
         <section className="rounded-3xl border border-border bg-background p-5 lg:col-span-2">
           <h2 className="font-semibold">Quick actions</h2>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -296,6 +357,255 @@ function Dashboard({ stats, onChanged }: { stats: AdminStats; onChanged: () => v
         </section>
       </div>
     </>
+  );
+}
+
+function Listings({
+  stats,
+  serviceKey,
+  del,
+}: {
+  stats: AdminStats;
+  serviceKey: boolean;
+  del: (id: string, label: string) => void;
+}) {
+  const [q, setQ] = useState("");
+  const term = q.trim().toLowerCase();
+  const rows = term
+    ? stats.recent.filter((r) =>
+        `${r.business ?? ""} ${r.name} ${r.city} ${getCategory(r.categoryId)?.name ?? ""}`
+          .toLowerCase()
+          .includes(term),
+      )
+    : stats.recent;
+
+  return (
+    <>
+      {!serviceKey && (
+        <div className="mb-4 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
+          🗑 Delete buttons need the service key. Turn it on in <strong>Settings</strong> to manage
+          listings here.
+        </div>
+      )}
+      <input
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Search listings…"
+        className="mb-4 h-11 w-full rounded-2xl border border-border bg-background px-4 outline-none focus:border-accent"
+      />
+      <section className="rounded-3xl border border-border bg-background p-3 sm:p-5">
+        {rows.length === 0 ? (
+          <p className="px-2 py-8 text-center text-sm text-muted">
+            {term ? "No listings match your search." : "No listings yet."}
+          </p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {rows.map((r) => (
+              <li key={r.id} className="py-2 first:pt-0 last:pb-0">
+                <ListingRow r={r} del={del} showStatus />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      <p className="mt-3 text-xs text-muted">
+        Showing {rows.length} of {stats.totalListings} listing{stats.totalListings === 1 ? "" : "s"}.
+      </p>
+    </>
+  );
+}
+
+function ListingRow({
+  r,
+  del,
+  showStatus,
+}: {
+  r: AdminStats["recent"][number];
+  del: (id: string, label: string) => void;
+  showStatus?: boolean;
+}) {
+  const cat = getCategory(r.categoryId);
+  return (
+    <div className="flex items-center gap-2">
+      <Link
+        href={`/provider/${r.id}`}
+        className="flex min-w-0 flex-1 items-center gap-3 py-1.5 transition hover:opacity-80"
+      >
+        <span className="brand-gradient flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-accent-foreground">
+          {cat?.emoji ?? "•"}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-medium">{r.business || r.name}</span>
+          <span className="block truncate text-xs text-muted">
+            {cat?.name ?? r.categoryId} · {r.city}
+          </span>
+        </span>
+      </Link>
+      {showStatus && (
+        <span
+          className={`hidden shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium sm:inline ${
+            r.availability === "available"
+              ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300"
+              : "bg-surface-2 text-muted"
+          }`}
+        >
+          {r.availability === "available" ? "Available" : r.availability}
+        </span>
+      )}
+      <button
+        type="button"
+        onClick={() => del(r.id, r.business || r.name)}
+        aria-label="Delete listing"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
+      >
+        🗑
+      </button>
+    </div>
+  );
+}
+
+function Categories({ stats }: { stats: AdminStats }) {
+  return (
+    <section className="rounded-3xl border border-border bg-background p-5 sm:p-6">
+      {stats.topCategories.length === 0 ? (
+        <p className="text-sm text-muted">No categories in use yet.</p>
+      ) : (
+        <>
+          <TopCategories data={stats.topCategories} total={stats.totalListings} />
+          <ul className="mt-6 divide-y divide-border border-t border-border">
+            {stats.topCategories.map((c) => {
+              const cat = getCategory(c.id);
+              return (
+                <li key={c.id} className="flex items-center justify-between py-3">
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    <span>{cat?.emoji ?? "🏷️"}</span> {cat?.name ?? c.id}
+                  </span>
+                  <span className="text-sm text-muted">
+                    {c.count} listing{c.count === 1 ? "" : "s"}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
+    </section>
+  );
+}
+
+function Reviews({ stats }: { stats: AdminStats }) {
+  return (
+    <section className="rounded-3xl border border-border bg-background p-6 text-center">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 text-2xl">
+        ⭐
+      </div>
+      <p className="mt-4 text-3xl font-semibold">{stats.totalReviews.toLocaleString()}</p>
+      <p className="text-muted">total reviews across your listings</p>
+      <p className="mx-auto mt-4 max-w-sm text-sm text-muted">
+        Customers rate providers from each profile. Per-review moderation is coming next — for now,
+        open any listing to read its reviews.
+      </p>
+    </section>
+  );
+}
+
+function Settings({ secured, serviceKey }: { secured: boolean; serviceKey: boolean }) {
+  return (
+    <div className="space-y-4">
+      <SettingRow
+        title="Dashboard lock"
+        ok={secured}
+        okText="Locked — password protected"
+        offText="Open — anyone with the link can view"
+        help={
+          secured ? undefined : (
+            <>
+              Add <code>ADMIN_PASSWORD</code> in Vercel and redeploy.
+            </>
+          )
+        }
+      />
+      <SettingRow
+        title="Admin actions (delete) & Pro payments"
+        ok={serviceKey}
+        okText="Enabled — you can delete listings"
+        offText="Off — delete buttons are disabled"
+        help={
+          serviceKey ? undefined : (
+            <>
+              Add <code>SUPABASE_SERVICE_ROLE_KEY</code> in Vercel and redeploy to turn this on.
+            </>
+          )
+        }
+      />
+      <div className="rounded-3xl border border-border bg-background p-5">
+        <h2 className="font-semibold">Manage</h2>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <a
+            href="https://vercel.com/dgc-mcc/findme/settings/environment-variables"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between rounded-2xl border border-border px-4 py-3 text-sm font-medium transition hover:bg-surface"
+          >
+            Environment variables ↗
+          </a>
+          <Link
+            href="/"
+            className="flex items-center justify-between rounded-2xl border border-border px-4 py-3 text-sm font-medium transition hover:bg-surface"
+          >
+            View live site ›
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SettingRow({
+  title,
+  ok,
+  okText,
+  offText,
+  help,
+}: {
+  title: string;
+  ok: boolean;
+  okText: string;
+  offText: string;
+  help?: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-3xl border border-border bg-background p-5">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-semibold">{title}</h2>
+        <span
+          className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
+            ok
+              ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300"
+              : "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300"
+          }`}
+        >
+          {ok ? "On" : "Off"}
+        </span>
+      </div>
+      <p className="mt-2 text-sm text-muted">{ok ? okText : offText}</p>
+      {help && <p className="mt-1 text-sm text-muted">{help}</p>}
+    </div>
+  );
+}
+
+function ComingSoon({ title }: { title: string }) {
+  return (
+    <section className="rounded-3xl border border-dashed border-border bg-background p-10 text-center">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-2 text-2xl">
+        🚧
+      </div>
+      <h2 className="mt-4 text-lg font-semibold">{title} is coming soon</h2>
+      <p className="mx-auto mt-1 max-w-sm text-sm text-muted">
+        This section lights up as the marketplace grows. Your listings, categories, and reviews are
+        live right now.
+      </p>
+    </section>
   );
 }
 

@@ -10,7 +10,11 @@ export async function GET() {
   }
   try {
     const stats = await repository.adminStats();
-    return NextResponse.json({ stats, secured: adminSecured() });
+    return NextResponse.json({
+      stats,
+      secured: adminSecured(),
+      serviceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    });
   } catch {
     return NextResponse.json({ error: "Could not load stats." }, { status: 500 });
   }
