@@ -17,6 +17,12 @@ export default function AboutPage() {
       <LegalSection heading="Our mission">
         <p>To make finding work and hiring help effortless for everyone, everywhere.</p>
       </LegalSection>
+      <LegalSection heading="Where we’re from">
+        <p>
+          anywork4me is proudly built in <strong>Ghana</strong> 🇬🇭 — created in West Africa and made
+          for the whole world. Wherever you open it, you’re using a platform born in Ghana.
+        </p>
+      </LegalSection>
       <LegalSection heading="Careers">
         <p>
           We’re growing. To express interest, email{" "}
