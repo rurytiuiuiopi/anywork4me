@@ -73,7 +73,22 @@ export async function signUpWithPassword(
     saveProfile({ ...profileFromUser(res.user), photoUrl: data.photoUrl });
     return { needsConfirm: false };
   }
-  return { needsConfirm: true }; // email confirmation is on → confirm, then sign in
+  // Email confirmation is required (no session yet). Still sign the user in
+  // LOCALLY so they can use the app immediately — confirming their email later
+  // just unlocks signing in on other devices. New users are never blocked.
+  saveProfile({
+    name: data.name || email.split("@")[0] || "Member",
+    business: data.business,
+    accountType: data.accountType ?? "service",
+    email: email.trim(),
+    phone: data.phone,
+    city: data.city,
+    bio: data.bio,
+    category: data.category,
+    photoUrl: data.photoUrl,
+    createdAt: new Date().toISOString(),
+  });
+  return { needsConfirm: true };
 }
 
 export async function signInWithPassword(email: string, password: string): Promise<void> {
@@ -82,7 +97,18 @@ export async function signInWithPassword(email: string, password: string): Promi
     email: email.trim(),
     password,
   });
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Account not confirmed yet, but this device already has that profile →
+    // restore the local session so they're never locked out on their own device.
+    if (/confirm/i.test(error.message)) {
+      const p = getProfile();
+      if (p?.email && p.email.toLowerCase() === email.trim().toLowerCase()) {
+        saveProfile(p);
+        return;
+      }
+    }
+    throw new Error(error.message);
+  }
   if (res.user) saveProfile(profileFromUser(res.user));
 }
 
