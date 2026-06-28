@@ -9,6 +9,7 @@ import { AuthSync } from "@/components/AuthSync";
 import { CookieConsent } from "@/components/CookieConsent";
 import { RefCapture } from "@/components/RefCapture";
 import { NetworkStatus } from "@/components/NetworkStatus";
+import { GoogleTag } from "@/components/GoogleTag";
 import { OG_IMAGE, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/seo";
 
 const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -106,6 +107,7 @@ export default function RootLayout({
         <RegisterSW />
         <Analytics />
         <SpeedInsights />
+        <GoogleTag />
       </body>
     </html>
   );
