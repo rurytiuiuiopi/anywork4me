@@ -57,6 +57,7 @@ function rowToProvider(row: any, reviews: Review[] = []): Provider {
     photos: row.photos?.length ? row.photos : [row.id],
     bannerUrl: banner,
     links: Array.isArray(row.links) ? row.links : undefined,
+    intent: row.intent ?? undefined,
     pricing:
       row.price_from != null
         ? {
@@ -211,12 +212,14 @@ export class SupabaseProviderRepository implements ProviderRepository {
     const insertRow: Record<string, unknown> = {
       ...row,
       links: input.links ?? [],
+      intent: input.intent ?? null,
       edit_token: editToken,
     };
     let attempt = await supabase.from("providers").insert(insertRow).select("*").single();
-    for (let i = 0; i < 2 && attempt.error; i++) {
+    for (let i = 0; i < 3 && attempt.error; i++) {
       const m = attempt.error.message;
       if (/links/i.test(m) && "links" in insertRow) delete insertRow.links;
+      else if (/intent/i.test(m) && "intent" in insertRow) delete insertRow.intent;
       else if (/edit_token/i.test(m) && "edit_token" in insertRow) delete insertRow.edit_token;
       else break;
       attempt = await supabase.from("providers").insert(insertRow).select("*").single();
@@ -263,12 +266,16 @@ export class SupabaseProviderRepository implements ProviderRepository {
         ? [input.bannerUrl, `${id}-2`, `${id}-3`]
         : [id, `${id}-2`, `${id}-3`],
       links: input.links ?? [],
+      intent: input.intent ?? null,
     };
 
     let res = await db.from("providers").update(patch).eq("id", id).select("*");
-    // If the links column isn't provisioned yet, save the rest so edits work.
-    if (res.error && /links/i.test(res.error.message) && "links" in patch) {
-      delete patch.links;
+    // Drop optional columns the DB may not have provisioned yet, so edits still save.
+    for (let i = 0; i < 2 && res.error; i++) {
+      const m = res.error.message;
+      if (/links/i.test(m) && "links" in patch) delete patch.links;
+      else if (/intent/i.test(m) && "intent" in patch) delete patch.intent;
+      else break;
       res = await db.from("providers").update(patch).eq("id", id).select("*");
     }
     const { data, error } = res;

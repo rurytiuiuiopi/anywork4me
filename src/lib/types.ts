@@ -80,6 +80,8 @@ export interface Provider {
   bannerUrl?: string;
   /** Links to the provider's work — Spotify, YouTube, Instagram, portfolio, etc. */
   links?: string[];
+  /** Listing intent — service / product / work / hiring / need (see lib/listing). */
+  intent?: string;
   pricing?: Pricing;
   availability: AvailabilityStatus;
   rating: number; // 0..5 aggregate
@@ -160,4 +162,6 @@ export interface ProviderRegistration {
   bannerUrl?: string;
   /** Links to the provider's work — Spotify, YouTube, Instagram, portfolio, etc. */
   links?: string[];
+  /** Listing intent — service / product / work / hiring / need (see lib/listing). */
+  intent?: string;
 }
