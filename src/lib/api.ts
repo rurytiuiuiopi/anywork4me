@@ -1,3 +1,4 @@
+import { getClientToken } from "./ownership";
 import type {
   Message,
   MessageInput,
@@ -87,12 +88,40 @@ export async function sendMessage(providerId: string, input: MessageInput): Prom
   const res = await fetch(`/api/providers/${providerId}/messages`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
+    body: JSON.stringify({ ...input, threadToken: getClientToken() }),
   });
   if (!res.ok) {
     const data = (await res.json().catch(() => ({}))) as { error?: string };
     throw new Error(data.error ?? "Could not send your message");
   }
+}
+
+/** Provider replies in-app to a conversation on one of their listings. */
+export async function replyToThread(
+  listingId: string,
+  threadToken: string,
+  fromName: string,
+  body: string,
+): Promise<boolean> {
+  const res = await fetch(`/api/inbox`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reply: { listingId, threadToken, fromName, body } }),
+  });
+  return res.ok;
+}
+
+/** The conversations this device started (as a client), with the owner's replies. */
+export async function fetchMyThreads(clientToken: string): Promise<Message[]> {
+  if (!clientToken) return [];
+  const res = await fetch(`/api/inbox`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ client: clientToken }),
+  });
+  if (!res.ok) return [];
+  const d = (await res.json()) as { messages?: Message[] };
+  return d.messages ?? [];
 }
 
 export async function fetchInbox(

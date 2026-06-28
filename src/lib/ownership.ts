@@ -40,3 +40,16 @@ export function ownsListing(id: string): boolean {
 export function getOwnedListings(): { id: string; token: string }[] {
   return Object.entries(read()).map(([id, token]) => ({ id, token }));
 }
+
+const CLIENT_KEY = "aw4m.client";
+
+/** This device's stable token for its OUTGOING message threads (as a sender). */
+export function getClientToken(): string {
+  if (typeof window === "undefined") return "";
+  let t = window.localStorage.getItem(CLIENT_KEY);
+  if (!t) {
+    t = globalThis.crypto.randomUUID();
+    window.localStorage.setItem(CLIENT_KEY, t);
+  }
+  return t;
+}
