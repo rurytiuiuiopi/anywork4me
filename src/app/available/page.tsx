@@ -416,8 +416,8 @@ function AvailableForm() {
         <div>
           <FieldLabel label="Links to your work" hint="optional" />
           <p className="mb-2 text-sm text-muted">
-            Spotify, YouTube, Instagram, SoundCloud, a website… so clients can see and hear what you
-            do.
+            TikTok, Instagram, Facebook, your website, Spotify, SoundCloud… so clients can see what
+            you do.
           </p>
           <div className="space-y-2">
             {links.map((l, i) => (
@@ -431,7 +431,7 @@ function AvailableForm() {
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck={false}
-                  placeholder="e.g. open.spotify.com/artist/…"
+                  placeholder="e.g. tiktok.com/@yourname"
                   className={inputCls}
                 />
                 {links.length > 1 && (
