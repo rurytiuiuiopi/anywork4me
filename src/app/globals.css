@@ -89,6 +89,21 @@ body {
   border: 1px solid var(--border);
 }
 
+/* ── Dashboard: soft sea-blue mesh + glassmorphism ───────────────────────── */
+.aw-dash {
+  background:
+    radial-gradient(55% 45% at 12% -5%, color-mix(in oklab, var(--accent) 14%, transparent), transparent 60%),
+    radial-gradient(45% 45% at 105% 8%, color-mix(in oklab, var(--accent-2) 12%, transparent), transparent 55%),
+    var(--surface);
+}
+.aw-glass {
+  background: color-mix(in oklab, var(--background) 70%, transparent);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  border: 1px solid color-mix(in oklab, var(--foreground) 9%, transparent);
+  box-shadow: var(--shadow-sm);
+}
+
 /* Hide scrollbars on horizontal scrollers while keeping them scrollable. */
 .no-scrollbar {
   scrollbar-width: none;
