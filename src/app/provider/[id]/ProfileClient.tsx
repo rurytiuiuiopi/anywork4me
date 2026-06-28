@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AvailabilityBadge } from "@/components/AvailabilityBadge";
 import { BookingSheet } from "@/components/BookingSheet";
-import { IconChat } from "@/components/Icons";
+import { IconCalendar, IconChat, IconCheck, IconShield, IconStar } from "@/components/Icons";
 import { MessageSheet } from "@/components/MessageSheet";
 import { Rating } from "@/components/Rating";
 import { ReviewSheet } from "@/components/ReviewSheet";
@@ -80,6 +80,16 @@ export function ProfileClient({ id }: { id: string }) {
 
   const emoji = getCategory(provider.categories[0])?.emoji;
   const dist = ctx.point ? distanceKm(ctx.point, provider.location.point) : null;
+  const memberSince = (() => {
+    try {
+      return new Date(provider.createdAt).toLocaleDateString(location.locale, {
+        month: "short",
+        year: "numeric",
+      });
+    } catch {
+      return null;
+    }
+  })();
 
   return (
     <main className="mx-auto min-h-dvh w-full max-w-2xl pb-28">
@@ -175,6 +185,31 @@ export function ProfileClient({ id }: { id: string }) {
             <span>{provider.location.label}</span>
             {location.source === "gps" && dist !== null && (
               <span>· {formatDistance(dist, location.locale)}</span>
+            )}
+          </div>
+
+          {/* Trust & credibility — all from real data */}
+          <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto">
+            {provider.verified && (
+              <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 dark:bg-green-950/40 dark:text-green-300">
+                <IconCheck className="h-3.5 w-3.5" /> Verified
+              </span>
+            )}
+            {provider.reviewsCount > 0 && (
+              <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1.5 text-xs font-semibold">
+                <IconStar className="h-3.5 w-3.5 text-amber-400" /> {provider.rating.toFixed(1)} (
+                {provider.reviewsCount})
+              </span>
+            )}
+            {memberSince && (
+              <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1.5 text-xs font-semibold text-muted">
+                <IconCalendar className="h-3.5 w-3.5" /> Since {memberSince}
+              </span>
+            )}
+            {provider.phone && (
+              <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1.5 text-xs font-semibold text-muted">
+                <IconShield className="h-3.5 w-3.5" /> Direct contact
+              </span>
             )}
           </div>
 
