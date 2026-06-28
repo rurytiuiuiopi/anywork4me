@@ -4,22 +4,33 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { IconArrowRight, IconUser } from "@/components/Icons";
-import { signIn } from "@/lib/profile";
+import { signInWithPassword } from "@/lib/auth";
+
+const inputCls =
+  "h-12 w-full rounded-2xl border border-border bg-surface-2 px-3.5 text-[15px] outline-none transition focus:border-accent";
 
 export default function SigninPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const result = signIn(email);
-    if (result === "ok") {
+    setBusy(true);
+    setError(null);
+    try {
+      await signInWithPassword(email, password);
       router.push("/");
-    } else if (result === "no-account") {
-      router.push(`/signup?email=${encodeURIComponent(email.trim())}`);
-    } else {
-      setError("We couldn’t find an account with that email on this device.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      setError(
+        /confirm/i.test(msg)
+          ? "Please confirm your email first (check your inbox), then sign in."
+          : "Wrong email or password.",
+      );
+      setBusy(false);
     }
   }
 
@@ -30,35 +41,51 @@ export default function SigninPage() {
           <IconUser className="h-7 w-7" />
         </div>
         <h1 className="mt-4 text-center text-2xl font-semibold">Sign in</h1>
-        <p className="mt-1 text-center text-muted">Enter the email you signed up with.</p>
+        <p className="mt-1 text-center text-muted">Welcome back to anywork4me.</p>
 
-        <form onSubmit={onSubmit} className="mt-6 space-y-3">
+        <form onSubmit={onSubmit} className="mt-6 space-y-3" autoComplete="on">
           <input
             type="email"
+            name="email"
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
               setError(null);
             }}
             required
-            placeholder="you@email.com"
+            autoComplete="email"
             autoCapitalize="none"
             autoCorrect="off"
-            className="h-12 w-full rounded-2xl border border-border bg-surface-2 px-3.5 text-[15px] outline-none transition focus:border-accent"
+            placeholder="Email"
+            className={inputCls}
+          />
+          <input
+            type="password"
+            name="password"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setError(null);
+            }}
+            required
+            autoComplete="current-password"
+            placeholder="Password"
+            className={inputCls}
           />
           {error && <p className="text-sm text-red-600">{error}</p>}
           <button
             type="submit"
-            className="brand-gradient flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 font-semibold text-accent-foreground transition active:scale-[0.99]"
+            disabled={busy}
+            className="brand-gradient flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 font-semibold text-accent-foreground transition active:scale-[0.99] disabled:opacity-50"
           >
-            Sign in <IconArrowRight className="h-5 w-5" />
+            {busy ? "Signing in…" : "Sign in"} <IconArrowRight className="h-5 w-5" />
           </button>
         </form>
 
         <p className="mt-5 text-center text-sm text-muted">
           New here?{" "}
           <Link href="/signup" className="font-semibold text-accent">
-            Create a profile
+            Create an account
           </Link>
         </p>
       </div>
