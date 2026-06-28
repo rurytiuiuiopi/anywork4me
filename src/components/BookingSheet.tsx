@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { IconCheck } from "@/components/Icons";
+import { sendMessage } from "@/lib/api";
 import type { Provider } from "@/lib/types";
 
 const waNumber = (p: Provider) => (p.whatsapp ?? p.phone ?? "").replace(/[^\d]/g, "");
@@ -46,6 +47,12 @@ export function BookingSheet({
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
+    // Drop the booking into the provider's in-app inbox (best-effort).
+    void sendMessage(provider.id, {
+      senderName: name.trim() || "A customer",
+      body: `Booking request\nDate: ${date}\nTime: ${time}${note ? `\nDetails: ${note}` : ""}`,
+      kind: "booking",
+    }).catch(() => {});
     if (number) {
       const text = encodeURIComponent(
         `Hi ${provider.name}, I'd like to book you (via anywork4me).\n\n` +

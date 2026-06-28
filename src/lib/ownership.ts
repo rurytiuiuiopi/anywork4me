@@ -35,3 +35,8 @@ export function forgetListing(id: string): void {
 export function ownsListing(id: string): boolean {
   return !!read()[id];
 }
+
+/** Every listing this device owns, as {id, token} — for the inbox/notifications. */
+export function getOwnedListings(): { id: string; token: string }[] {
+  return Object.entries(read()).map(([id, token]) => ({ id, token }));
+}

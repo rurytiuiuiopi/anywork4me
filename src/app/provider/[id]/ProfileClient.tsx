@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AvailabilityBadge } from "@/components/AvailabilityBadge";
 import { BookingSheet } from "@/components/BookingSheet";
+import { IconChat } from "@/components/Icons";
+import { MessageSheet } from "@/components/MessageSheet";
 import { Rating } from "@/components/Rating";
 import { ReviewSheet } from "@/components/ReviewSheet";
 import { SaveButton } from "@/components/SaveButton";
@@ -40,6 +42,7 @@ export function ProfileClient({ id }: { id: string }) {
   const { ctx, location } = useLocation();
   const [provider, setProvider] = useState<Provider | null | undefined>(undefined);
   const [booking, setBooking] = useState(false);
+  const [messaging, setMessaging] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [owned, setOwned] = useState(false);
   const [upgrading, setUpgrading] = useState(false);
@@ -219,6 +222,15 @@ export function ProfileClient({ id }: { id: string }) {
           })}
         </section>
 
+        {/* Message */}
+        <button
+          type="button"
+          onClick={() => setMessaging(true)}
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-surface-2 py-3 font-semibold transition hover:border-accent/40 active:scale-[0.99]"
+        >
+          <IconChat className="h-5 w-5 text-accent" /> Message {provider.name}
+        </button>
+
         {/* Pricing */}
         {provider.pricing && (
           <section className="mt-5 flex items-center justify-between rounded-3xl border border-border bg-surface-2 px-5 py-4">
@@ -374,6 +386,12 @@ export function ProfileClient({ id }: { id: string }) {
       </div>
 
       <BookingSheet provider={provider} open={booking} onClose={() => setBooking(false)} />
+      <MessageSheet
+        providerId={provider.id}
+        providerName={provider.name}
+        open={messaging}
+        onClose={() => setMessaging(false)}
+      />
       <ReviewSheet
         providerId={provider.id}
         providerName={provider.name}

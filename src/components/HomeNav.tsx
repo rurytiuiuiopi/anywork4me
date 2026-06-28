@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { AccountMenu } from "@/components/AccountMenu";
 import { Brand } from "@/components/Brand";
 import { IconPlus } from "@/components/Icons";
+import { NotificationBell } from "@/components/NotificationBell";
 import { signOutAuth } from "@/lib/auth";
 import { getProfile, isSignedIn, type LocalProfile } from "@/lib/profile";
 
@@ -34,6 +35,7 @@ export function HomeNav() {
           >
             Browse
           </Link>
+          <NotificationBell />
           {profile ? (
             <>
               <Link
