@@ -36,7 +36,6 @@ export default function SignupPage() {
   const [photoUrl, setPhotoUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [sentTo, setSentTo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -66,7 +65,7 @@ export default function SignupPage() {
     setBusy(true);
     setError(null);
     try {
-      const { needsConfirm } = await signUpWithPassword(email, password, {
+      await signUpWithPassword(email, password, {
         name: name.trim(),
         business: business.trim() || undefined,
         accountType,
@@ -76,12 +75,8 @@ export default function SignupPage() {
         category: category || undefined,
         photoUrl: photoUrl || undefined,
       });
-      if (needsConfirm) {
-        setSentTo(email.trim());
-        setBusy(false);
-      } else {
-        router.push("/available");
-      }
+      // Signed in locally regardless of email confirmation — proceed straight in.
+      router.push("/available");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
       setError(
@@ -91,30 +86,6 @@ export default function SignupPage() {
       );
       setBusy(false);
     }
-  }
-
-  // ── Email confirmation sent ─────────────────────────────────────────────
-  if (sentTo) {
-    return (
-      <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-5 py-10 text-center">
-        <div className="rounded-4xl border border-border bg-background p-7 shadow-sm">
-          <div className="brand-gradient mx-auto flex h-14 w-14 items-center justify-center rounded-2xl text-2xl text-accent-foreground">
-            ✉️
-          </div>
-          <h1 className="mt-4 text-2xl font-semibold">Confirm your email</h1>
-          <p className="mt-2 text-muted">
-            We sent a link to <strong>{sentTo}</strong>. Click it to activate your account, then sign
-            in.
-          </p>
-          <Link
-            href="/signin"
-            className="brand-gradient mt-6 inline-flex w-full items-center justify-center rounded-2xl py-3.5 font-semibold text-accent-foreground"
-          >
-            Go to sign in
-          </Link>
-        </div>
-      </main>
-    );
   }
 
   // ── Returning visitor (signed in on this device) ────────────────────────
