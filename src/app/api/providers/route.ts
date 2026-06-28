@@ -2,6 +2,7 @@ import { after, NextResponse } from "next/server";
 import { repository } from "@/lib/data";
 import { cleanIntent } from "@/lib/listing";
 import { cleanLinks } from "@/lib/links";
+import { clientKey, rateLimit } from "@/lib/rate-limit";
 import { submitToIndexNow } from "@/lib/indexnow";
 import { SITE_URL } from "@/lib/seo";
 import type { ProviderRegistration } from "@/lib/types";
@@ -28,6 +29,9 @@ export async function GET(req: Request) {
 
 // POST /api/providers  — "I'm Available" registration. Body: { ...registration, ctx }
 export async function POST(req: Request) {
+  if (!rateLimit(clientKey(req, "register"), 6, 10 * 60_000)) {
+    return NextResponse.json({ error: "Too many submissions. Try again shortly." }, { status: 429 });
+  }
   let body: (Partial<ProviderRegistration> & { ctx?: Record<string, unknown> }) | null = null;
   try {
     body = await req.json();

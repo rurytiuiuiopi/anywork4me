@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { repository } from "@/lib/data";
+import { clientKey, rateLimit } from "@/lib/rate-limit";
 import { ctxFromParams } from "../../../_ctx";
 
 // POST /api/providers/:id/reviews  — submit a review. Body: { author, rating, comment, ctx }
@@ -7,6 +8,9 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  if (!rateLimit(clientKey(req, "review"), 6, 60_000)) {
+    return NextResponse.json({ error: "Too many reviews too fast. Try again shortly." }, { status: 429 });
+  }
   const { id } = await params;
 
   let body:
