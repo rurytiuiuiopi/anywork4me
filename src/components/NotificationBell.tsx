@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { IconBell, IconChat } from "@/components/Icons";
 import { fetchInbox } from "@/lib/api";
 import { getOwnedListings } from "@/lib/ownership";
+import { hasProfile } from "@/lib/profile";
+import { supportUnread } from "@/lib/support";
 
 function IconLink({
   href,
@@ -34,26 +36,48 @@ function IconLink({
   );
 }
 
-// Bell (booking alerts) + message box (client messages), side by side.
-// Shown only to people who own a listing on this device. Polls every 30s.
+// Bell = unread booking alerts (listing owners only).
+// Message box = unread client messages + unread support replies from Sarah
+// (shown for any signed-in user, even before they post a listing).
 export function NotificationBell() {
   const [bookings, setBookings] = useState(0);
   const [messages, setMessages] = useState(0);
+  const [owns, setOwns] = useState(false);
   const [show, setShow] = useState(false);
 
   useEffect(() => {
     const owned = getOwnedListings();
-    if (owned.length === 0) return;
+    const ownsListings = owned.length > 0;
+    const profile = hasProfile();
+    if (!ownsListings && !profile) return;
+    setOwns(ownsListings);
     setShow(true);
+
     let alive = true;
-    const tick = () =>
-      fetchInbox(owned)
-        .then((r) => {
-          if (!alive) return;
-          setMessages(r.messages.filter((m) => !m.read && m.kind === "message").length);
-          setBookings(r.messages.filter((m) => !m.read && m.kind === "booking").length);
-        })
-        .catch(() => {});
+    const tick = async () => {
+      let listingMsgs = 0;
+      let bookingUnread = 0;
+      if (ownsListings) {
+        try {
+          const r = await fetchInbox(owned);
+          listingMsgs = r.messages.filter((m) => !m.read && m.kind === "message").length;
+          bookingUnread = r.messages.filter((m) => !m.read && m.kind === "booking").length;
+        } catch {
+          /* ignore */
+        }
+      }
+      let support = 0;
+      if (profile) {
+        try {
+          support = await supportUnread();
+        } catch {
+          /* ignore */
+        }
+      }
+      if (!alive) return;
+      setBookings(bookingUnread);
+      setMessages(listingMsgs + support);
+    };
     tick();
     const t = setInterval(tick, 30000);
     return () => {
@@ -66,9 +90,11 @@ export function NotificationBell() {
 
   return (
     <div className="flex items-center gap-1.5">
-      <IconLink href="/inbox" label="Booking alerts" badge={bookings}>
-        <IconBell className="h-5 w-5" />
-      </IconLink>
+      {owns && (
+        <IconLink href="/inbox" label="Booking alerts" badge={bookings}>
+          <IconBell className="h-5 w-5" />
+        </IconLink>
+      )}
       <IconLink href="/inbox" label="Messages" badge={messages}>
         <IconChat className="h-5 w-5" />
       </IconLink>
