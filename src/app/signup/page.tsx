@@ -13,7 +13,9 @@ import {
   type AccountType,
   type LocalProfile,
   getProfile,
+  isSignedIn,
   saveProfile,
+  signOut,
 } from "@/lib/profile";
 
 const inputCls =
@@ -35,7 +37,11 @@ export default function SignupPage() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => setExisting(getProfile()), []);
+  useEffect(() => {
+    setExisting(isSignedIn() ? getProfile() : null);
+    const fromLink = new URLSearchParams(window.location.search).get("email");
+    if (fromLink) setEmail(fromLink);
+  }, []);
 
   async function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -100,13 +106,25 @@ export default function SignupPage() {
               Browse opportunities
             </Link>
           </div>
-          <button
-            type="button"
-            onClick={() => setExisting(null)}
-            className="mt-4 text-sm font-medium text-muted underline underline-offset-2"
-          >
-            Edit my profile
-          </button>
+          <div className="mt-4 flex items-center justify-center gap-5">
+            <button
+              type="button"
+              onClick={() => setExisting(null)}
+              className="text-sm font-medium text-muted underline underline-offset-2"
+            >
+              Edit my profile
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                signOut();
+                router.push("/");
+              }}
+              className="text-sm font-medium text-muted underline underline-offset-2"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </main>
     );
