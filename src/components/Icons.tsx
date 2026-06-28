@@ -126,3 +126,26 @@ export const IconCamera = (p: P) => (
     <circle cx="12" cy="13" r="4" />
   </Svg>
 );
+export const IconChevron = (p: P) => (
+  <Svg className={p.className}>
+    <path d="M9 6l6 6-6 6" />
+  </Svg>
+);
+export const IconLogout = (p: P) => (
+  <Svg className={p.className}>
+    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+    <path d="M16 17l5-5-5-5M21 12H9" />
+  </Svg>
+);
+export const IconHelp = (p: P) => (
+  <Svg className={p.className}>
+    <circle cx="12" cy="12" r="10" />
+    <path d="M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3" />
+    <path d="M12 17h.01" />
+  </Svg>
+);
+export const IconBookmark = (p: P) => (
+  <Svg className={p.className}>
+    <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
+  </Svg>
+);
