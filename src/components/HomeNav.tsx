@@ -1,23 +1,25 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AccountMenu } from "@/components/AccountMenu";
 import { Brand } from "@/components/Brand";
 import { IconPlus } from "@/components/Icons";
-import { getProfile, isSignedIn, signOut } from "@/lib/profile";
+import { getProfile, isSignedIn, signOut, type LocalProfile } from "@/lib/profile";
 
 export function HomeNav() {
-  const [signedIn, setSignedIn] = useState(false);
-  const [name, setName] = useState("");
+  const router = useRouter();
+  const [profile, setProfile] = useState<LocalProfile | null>(null);
 
   useEffect(() => {
-    setSignedIn(isSignedIn());
-    setName(getProfile()?.name?.split(" ")[0] ?? "");
+    setProfile(isSignedIn() ? getProfile() : null);
   }, []);
 
   function handleSignOut() {
     signOut();
-    setSignedIn(false);
+    setProfile(null);
+    router.push("/");
   }
 
   return (
@@ -31,22 +33,15 @@ export function HomeNav() {
           >
             Browse
           </Link>
-          {signedIn ? (
+          {profile ? (
             <>
-              {name && <span className="hidden text-sm text-muted sm:inline">Hi {name}</span>}
               <Link
                 href="/available"
                 className="brand-gradient inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-accent-foreground shadow-sm transition active:scale-95"
               >
                 <IconPlus className="h-4 w-4" /> Post listing
               </Link>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="rounded-full border border-border px-3.5 py-2 text-sm font-medium transition hover:bg-surface active:scale-95"
-              >
-                Sign out
-              </button>
+              <AccountMenu profile={profile} onSignOut={handleSignOut} />
             </>
           ) : (
             <>
