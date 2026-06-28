@@ -73,6 +73,16 @@ export async function submitReview(
   return data.review;
 }
 
+export async function fetchStats(): Promise<{ providers: number; reviews: number; categories: number }> {
+  try {
+    const res = await fetch(`/api/stats`);
+    if (!res.ok) return { providers: 0, reviews: 0, categories: 0 };
+    return (await res.json()) as { providers: number; reviews: number; categories: number };
+  } catch {
+    return { providers: 0, reviews: 0, categories: 0 };
+  }
+}
+
 export async function sendMessage(providerId: string, input: MessageInput): Promise<void> {
   const res = await fetch(`/api/providers/${providerId}/messages`, {
     method: "POST",

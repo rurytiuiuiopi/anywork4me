@@ -160,3 +160,21 @@ export const IconChat = (p: P) => (
     <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
   </Svg>
 );
+export const IconSparkles = (p: P) => (
+  <Svg className={p.className}>
+    <path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z" />
+    <path d="M18 4v3M19.5 5.5h-3" />
+  </Svg>
+);
+export const IconScissors = (p: P) => (
+  <Svg className={p.className}>
+    <circle cx="6" cy="6" r="3" />
+    <circle cx="6" cy="18" r="3" />
+    <path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12" />
+  </Svg>
+);
+export const IconHeart = (p: P) => (
+  <Svg className={p.className}>
+    <path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 10-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 000-7.8z" />
+  </Svg>
+);
