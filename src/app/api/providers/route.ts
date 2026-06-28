@@ -1,5 +1,6 @@
 import { after, NextResponse } from "next/server";
 import { repository } from "@/lib/data";
+import { cleanIntent } from "@/lib/listing";
 import { cleanLinks } from "@/lib/links";
 import { submitToIndexNow } from "@/lib/indexnow";
 import { SITE_URL } from "@/lib/seo";
@@ -64,6 +65,7 @@ export async function POST(req: Request) {
             ? body.bannerUrl
             : undefined,
         links: cleanLinks(body.links),
+        intent: cleanIntent(body.intent),
       },
       ctxFromParams(ctxParams),
     );

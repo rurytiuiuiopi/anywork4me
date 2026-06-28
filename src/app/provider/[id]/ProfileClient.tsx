@@ -13,6 +13,7 @@ import { UpgradeSheet } from "@/components/UpgradeSheet";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { fetchProvider } from "@/lib/api";
 import { getCategory } from "@/lib/categories";
+import { intentBadge } from "@/lib/listing";
 import { linkMeta } from "@/lib/links";
 import { ownsListing } from "@/lib/ownership";
 import { features } from "@/lib/config";
@@ -126,6 +127,11 @@ export function ProfileClient({ id }: { id: string }) {
       <div className="px-5">
         {/* Identity */}
         <section className="pt-5">
+          {intentBadge(provider.intent) && (
+            <span className="mb-2 inline-flex items-center rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">
+              {intentBadge(provider.intent)}
+            </span>
+          )}
           <div className="flex items-start gap-2">
             <h1 className="text-2xl font-semibold tracking-tight">
               {provider.business ?? provider.name}

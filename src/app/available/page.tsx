@@ -8,7 +8,9 @@ import { deleteProvider, fetchProvider, registerProvider, updateProvider } from 
 import { CATEGORIES } from "@/lib/categories";
 import { useLocation } from "@/lib/location/LocationProvider";
 import { fileToBannerDataUrl } from "@/lib/image";
+import { LISTING_TYPES } from "@/lib/listing";
 import { forgetListing, getEditToken, rememberListing } from "@/lib/ownership";
+import { getProfile, hasProfile } from "@/lib/profile";
 import type { PricingUnit } from "@/lib/types";
 
 const UNITS: PricingUnit[] = ["hour", "day", "week", "month", "job", "session", "person", "km"];
@@ -38,6 +40,8 @@ function AvailableForm() {
   const [priceUnit, setPriceUnit] = useState<PricingUnit>("hour");
   const [bannerUrl, setBannerUrl] = useState("");
   const [links, setLinks] = useState<string[]>([""]);
+  const [intent, setIntent] = useState("");
+  const [allowed, setAllowed] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +72,28 @@ function AvailableForm() {
     }
   }
 
+  // Posting requires a profile (the no-login gate); editing is always allowed.
+  useEffect(() => {
+    if (editId) {
+      setAllowed(true);
+      return;
+    }
+    if (!hasProfile()) {
+      router.replace("/signup");
+      return;
+    }
+    setAllowed(true);
+    const p = getProfile();
+    if (p) {
+      setName((cur) => cur || p.name);
+      setBusiness((cur) => cur || p.business || "");
+      if (p.phone) setPhone((cur) => cur || p.phone!);
+      if (p.bio) setBio((cur) => cur || p.bio!);
+      if (p.category) setCats((cur) => (cur.length ? cur : [p.category!]));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editId]);
+
   useEffect(() => {
     if (!editId) return;
     const token = getEditToken(editId);
@@ -97,6 +123,7 @@ function AvailableForm() {
         if (p.pricing?.unit) setPriceUnit(p.pricing.unit);
         setBannerUrl(p.bannerUrl ?? "");
         setLinks(p.links?.length ? p.links : [""]);
+        setIntent(p.intent ?? "");
         setLoadingEdit(false);
       })
       .catch(() => {
@@ -153,6 +180,7 @@ function AvailableForm() {
       priceUnit,
       bannerUrl: bannerUrl || undefined,
       links: links.map((l) => l.trim()).filter(Boolean),
+      intent: intent || undefined,
     };
     try {
       if (isEdit) {
@@ -201,6 +229,14 @@ function AvailableForm() {
     );
   }
 
+  if (!isEdit && !allowed) {
+    return (
+      <main className="mx-auto flex min-h-dvh w-full max-w-2xl items-center justify-center px-5">
+        <div className="fm-skeleton h-10 w-10 rounded-full" />
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto min-h-dvh w-full max-w-2xl px-5 pb-16">
       <header className="flex items-center justify-between gap-3 py-5">
@@ -221,16 +257,41 @@ function AvailableForm() {
           {isEdit ? "✏️" : "✋"}
         </span>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight">
-          {isEdit ? "Edit your listing" : "I’m Available"}
+          {isEdit ? "Edit your listing" : "Add your listing"}
         </h1>
         <p className="mt-2 text-balance text-muted">
           {isEdit
             ? "Update your details below, then save your changes."
-            : `Create your profile so people in ${location.city} can find and book you. Prices are shown in ${location.currency}.`}
+            : `Tell people what you’re offering or looking for. Prices show in ${location.currency}.`}
         </p>
       </div>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-6">
+        <div>
+          <FieldLabel label="What are you posting?" />
+          <div className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {LISTING_TYPES.map((t) => {
+              const on = intent === t.id;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setIntent(on ? "" : t.id)}
+                  aria-pressed={on}
+                  className={`rounded-2xl border px-3.5 py-3 text-left transition active:scale-95 ${
+                    on
+                      ? "border-accent bg-accent/10"
+                      : "border-border bg-surface-2 hover:border-accent/40"
+                  }`}
+                >
+                  <span className="block text-sm font-semibold">{t.label}</span>
+                  <span className="block text-xs text-muted">{t.hint}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <button
           type="button"
           onClick={usePreciseLocation}
@@ -333,21 +394,21 @@ function AvailableForm() {
           </div>
         </div>
 
-        <Field label="Tagline" hint="optional">
+        <Field label="Listing title" hint="recommended">
           <input
             value={tagline}
             onChange={(e) => setTagline(e.target.value)}
-            placeholder="e.g. Weddings, clubs & private parties"
+            placeholder="e.g. Wedding DJ available for hire"
             className={inputCls}
           />
         </Field>
 
-        <Field label="About you" hint="optional">
+        <Field label="Description" hint="optional">
           <textarea
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             rows={3}
-            placeholder="Tell customers what makes you great."
+            placeholder="Describe what you’re offering or looking for."
             className={`${inputCls} h-auto resize-none py-3`}
           />
         </Field>

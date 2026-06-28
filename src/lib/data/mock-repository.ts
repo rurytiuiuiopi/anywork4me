@@ -180,6 +180,7 @@ export class MockProviderRepository implements ProviderRepository {
         : [id, `${id}-2`, `${id}-3`],
       bannerUrl: input.bannerUrl,
       links: input.links ?? [],
+      intent: input.intent,
       pricing: input.priceFrom
         ? {
             from: input.priceFrom,
@@ -232,6 +233,7 @@ export class MockProviderRepository implements ProviderRepository {
       photos: input.bannerUrl ? [input.bannerUrl, `${id}-2`, `${id}-3`] : existing.photos,
       bannerUrl: input.bannerUrl,
       links: input.links ?? existing.links ?? [],
+      intent: input.intent ?? existing.intent,
       pricing: input.priceFrom
         ? {
             from: input.priceFrom,
