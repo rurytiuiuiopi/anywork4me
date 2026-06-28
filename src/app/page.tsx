@@ -4,6 +4,7 @@ import { FeaturedListings } from "@/components/FeaturedListings";
 import { Footer } from "@/components/Footer";
 import { HomeNav } from "@/components/HomeNav";
 import { HomeSearch } from "@/components/HomeSearch";
+import { PricingSection } from "@/components/PricingSection";
 import { TrustStats } from "@/components/TrustStats";
 import {
   IconArrowRight,
@@ -180,6 +181,9 @@ export default function HomePage() {
             ))}
           </div>
         </section>
+
+        {/* Pricing — free vs pro */}
+        <PricingSection />
 
         {/* Featured */}
         <section className="mt-16">
