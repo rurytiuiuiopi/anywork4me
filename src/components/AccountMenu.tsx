@@ -11,6 +11,7 @@ import {
   IconLogout,
   IconPlus,
   IconUser,
+  IconUsers,
 } from "@/components/Icons";
 import { accountTypeLabel, type LocalProfile } from "@/lib/profile";
 
@@ -98,6 +99,7 @@ export function AccountMenu({
           <MenuLink href="/signup" Icon={IconUser} label="My profile" onClick={() => setOpen(false)} />
           <MenuLink href="/inbox" Icon={IconChat} label="Messages" onClick={() => setOpen(false)} />
           <MenuLink href="/available" Icon={IconPlus} label="Post a listing" onClick={() => setOpen(false)} />
+          <MenuLink href="/invite" Icon={IconUsers} label="Invite & earn" onClick={() => setOpen(false)} />
           <MenuLink href="/saved" Icon={IconBookmark} label="Saved" onClick={() => setOpen(false)} />
           <MenuLink href="/account" Icon={IconGear} label="Account & data" onClick={() => setOpen(false)} />
 
