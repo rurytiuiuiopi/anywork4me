@@ -140,9 +140,23 @@ export function ProfileClient({ id }: { id: string }) {
           )}
           {provider.tagline && <p className="mt-2 text-[15px]">{provider.tagline}</p>}
 
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5">
-            <Rating rating={provider.rating} count={provider.reviewsCount} locale={location.locale} variant="full" />
-          </div>
+          {features.trust.reviews ? (
+            <button
+              type="button"
+              onClick={() => setReviewing(true)}
+              aria-label={`Rate ${provider.name}`}
+              className="mt-3 inline-flex items-center gap-2.5 rounded-full border border-border bg-surface-2 px-4 py-2 transition hover:border-accent/40 active:scale-95"
+            >
+              <Rating rating={provider.rating} count={provider.reviewsCount} locale={location.locale} variant="full" />
+              <span className="text-sm font-semibold text-accent">
+                {provider.reviewsCount > 0 ? "· Rate" : "· Be the first ★"}
+              </span>
+            </button>
+          ) : (
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+              <Rating rating={provider.rating} count={provider.reviewsCount} locale={location.locale} variant="full" />
+            </div>
+          )}
 
           <div className="mt-2 flex items-center gap-1.5 text-sm text-muted">
             <svg viewBox="0 0 24 24" className="h-4 w-4 text-accent" fill="currentColor">
