@@ -30,6 +30,7 @@ export function accountTypeLabel(id?: AccountType): string {
 }
 
 const KEY = "aw4m.profile";
+const SESSION_KEY = "aw4m.session";
 
 export function getProfile(): LocalProfile | null {
   if (typeof window === "undefined") return null;
@@ -48,9 +49,36 @@ export function hasProfile(): boolean {
 export function saveProfile(profile: LocalProfile): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(KEY, JSON.stringify(profile));
+  window.localStorage.setItem(SESSION_KEY, "1"); // creating/updating signs you in
 }
 
 export function clearProfile(): void {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(KEY);
+  window.localStorage.removeItem(SESSION_KEY);
+}
+
+/** Signed in = a profile exists on this device and the session is active. */
+export function isSignedIn(): boolean {
+  if (typeof window === "undefined") return false;
+  return !!getProfile() && window.localStorage.getItem(SESSION_KEY) === "1";
+}
+
+export function signOut(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(SESSION_KEY); // keep the profile, just end the session
+}
+
+/** Sign in with the email tied to the saved profile on this device. */
+export function signIn(email: string): "ok" | "no-account" | "mismatch" {
+  const p = getProfile();
+  if (!p) return "no-account";
+  const entered = email.trim().toLowerCase();
+  if (p.email && p.email.toLowerCase() !== entered) return "mismatch";
+  if (!p.email) {
+    p.email = email.trim();
+    window.localStorage.setItem(KEY, JSON.stringify(p));
+  }
+  window.localStorage.setItem(SESSION_KEY, "1");
+  return "ok";
 }

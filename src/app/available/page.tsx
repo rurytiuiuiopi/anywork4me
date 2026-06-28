@@ -10,7 +10,7 @@ import { useLocation } from "@/lib/location/LocationProvider";
 import { fileToBannerDataUrl } from "@/lib/image";
 import { LISTING_TYPES } from "@/lib/listing";
 import { forgetListing, getEditToken, rememberListing } from "@/lib/ownership";
-import { getProfile, hasProfile } from "@/lib/profile";
+import { getProfile, hasProfile, isSignedIn } from "@/lib/profile";
 import type { PricingUnit } from "@/lib/types";
 
 const UNITS: PricingUnit[] = ["hour", "day", "week", "month", "job", "session", "person", "km"];
@@ -78,8 +78,8 @@ function AvailableForm() {
       setAllowed(true);
       return;
     }
-    if (!hasProfile()) {
-      router.replace("/signup");
+    if (!isSignedIn()) {
+      router.replace(hasProfile() ? "/signin" : "/signup");
       return;
     }
     setAllowed(true);
