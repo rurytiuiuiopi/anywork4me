@@ -19,6 +19,8 @@ export interface LocalProfile {
   supportToken?: string;
   /** True once the auto welcome message has been created (no duplicates). */
   welcomed?: boolean;
+  /** Short personal code for the user's referral / invite link. */
+  referralCode?: string;
 }
 
 export const ACCOUNT_TYPES: { id: AccountType; label: string; desc: string }[] = [
@@ -58,6 +60,10 @@ export function saveProfile(profile: LocalProfile): void {
     ...profile,
     supportToken: profile.supportToken ?? prev?.supportToken ?? globalThis.crypto.randomUUID(),
     welcomed: profile.welcomed ?? prev?.welcomed ?? false,
+    referralCode:
+      profile.referralCode ??
+      prev?.referralCode ??
+      globalThis.crypto.randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase(),
   };
   window.localStorage.setItem(KEY, JSON.stringify(next));
   window.localStorage.setItem(SESSION_KEY, "1"); // creating/updating signs you in

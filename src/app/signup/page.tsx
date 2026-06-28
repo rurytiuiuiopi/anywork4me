@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { IconArrowRight, IconCamera, IconPlus, IconUser } from "@/components/Icons";
 import { LocationControl } from "@/components/LocationControl";
 import { signOutAuth, signUpWithPassword } from "@/lib/auth";
+import { recordReferral } from "@/lib/referral";
 import { CATEGORIES } from "@/lib/categories";
 import { fileToBannerDataUrl } from "@/lib/image";
 import { useLocation } from "@/lib/location/LocationProvider";
@@ -75,6 +76,7 @@ export default function SignupPage() {
         category: category || undefined,
         photoUrl: photoUrl || undefined,
       });
+      await recordReferral(); // attribute the signup to their inviter, if any
       // Signed in locally regardless of email confirmation — proceed straight in.
       router.push("/available");
     } catch (err) {
