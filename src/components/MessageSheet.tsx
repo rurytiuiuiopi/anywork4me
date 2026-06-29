@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { IconCheck } from "@/components/Icons";
 import { sendMessage } from "@/lib/api";
+import { markChatStarted } from "@/lib/ownership";
 import { getProfile } from "@/lib/profile";
 
 export function MessageSheet({
@@ -54,6 +56,7 @@ export function MessageSheet({
         senderContact: contact.trim() || undefined,
         body: body.trim(),
       });
+      markChatStarted(); // give this device its own Messages inbox to read replies
       setDone(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn’t send your message.");
@@ -72,14 +75,24 @@ export function MessageSheet({
             </span>
             <h2 className="text-xl font-semibold">Message sent</h2>
             <p className="max-w-xs text-balance text-sm text-muted">
-              {providerName} will see it in their inbox and can reply to you.
+              {providerName} will see it in their inbox. Their reply lands in your{" "}
+              <span className="font-medium text-foreground">Messages</span> — tap the 💬 icon any time.
             </p>
-            <button
-              onClick={onClose}
-              className="brand-gradient mt-2 h-11 rounded-2xl px-6 font-semibold text-accent-foreground"
-            >
-              Done
-            </button>
+            <div className="mt-2 flex gap-3">
+              <Link
+                href="/inbox?tab=messages"
+                onClick={onClose}
+                className="flex h-11 items-center rounded-2xl border border-border px-5 font-semibold transition hover:bg-surface"
+              >
+                View messages
+              </Link>
+              <button
+                onClick={onClose}
+                className="brand-gradient h-11 rounded-2xl px-6 font-semibold text-accent-foreground"
+              >
+                Done
+              </button>
+            </div>
           </div>
         ) : (
           <form onSubmit={submit}>

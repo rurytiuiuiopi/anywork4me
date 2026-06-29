@@ -4,8 +4,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { IconBell, IconChat } from "@/components/Icons";
-import { fetchInbox } from "@/lib/api";
-import { getOwnedListings } from "@/lib/ownership";
+import { fetchInbox, fetchMyThreads } from "@/lib/api";
+import { getClientToken, getOwnedListings, hasStartedChat } from "@/lib/ownership";
 import { hasProfile } from "@/lib/profile";
 import { supportUnread } from "@/lib/support";
 
@@ -49,7 +49,8 @@ export function NotificationBell() {
     const owned = getOwnedListings();
     const ownsListings = owned.length > 0;
     const profile = hasProfile();
-    if (!ownsListings && !profile) return;
+    const chatted = hasStartedChat();
+    if (!ownsListings && !profile && !chatted) return;
     setOwns(ownsListings);
     setShow(true);
 
@@ -78,9 +79,19 @@ export function NotificationBell() {
           /* ignore */
         }
       }
+      // Customer side: unread replies from providers on this device's own threads.
+      let clientUnread = 0;
+      if (chatted) {
+        try {
+          const mine = await fetchMyThreads(getClientToken());
+          clientUnread = mine.filter((m) => !m.read && m.sender === "owner").length;
+        } catch {
+          /* ignore */
+        }
+      }
       if (!alive) return;
       setBookings(bookingUnread);
-      setMessages(listingMsgs + support);
+      setMessages(listingMsgs + support + clientUnread);
     };
     tick();
     const t = setInterval(tick, 30000);
