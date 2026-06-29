@@ -11,6 +11,7 @@ import { fileToBannerDataUrl } from "@/lib/image";
 import { LISTING_TYPES } from "@/lib/listing";
 import { forgetListing, getEditToken, rememberListing } from "@/lib/ownership";
 import { getProfile, hasProfile, isSignedIn } from "@/lib/profile";
+import { trackConversion } from "@/lib/track";
 import type { PricingUnit } from "@/lib/types";
 
 const UNITS: PricingUnit[] = ["hour", "day", "week", "month", "job", "session", "person", "km"];
@@ -190,6 +191,7 @@ function AvailableForm() {
       } else {
         const provider = await registerProvider(values, ctx);
         rememberListing(provider.id, provider.editToken);
+        trackConversion("listing"); // tell Google Ads a listing was published
         router.push(`/provider/${provider.id}`);
       }
     } catch (err) {
