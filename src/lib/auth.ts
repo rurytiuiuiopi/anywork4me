@@ -52,10 +52,15 @@ export async function signUpWithPassword(
   data: Partial<LocalProfile>,
 ): Promise<{ needsConfirm: boolean }> {
   const supa = getAuthClient();
+  // Send the confirmation email's link back to THIS site (so it opens in the
+  // browser and signs the user in), not Supabase's default localhost Site URL.
+  const emailRedirectTo =
+    typeof window !== "undefined" ? `${window.location.origin}/auth/confirm` : undefined;
   const { data: res, error } = await supa.auth.signUp({
     email: email.trim(),
     password,
     options: {
+      emailRedirectTo,
       data: {
         name: data.name ?? "",
         business: data.business ?? "",
