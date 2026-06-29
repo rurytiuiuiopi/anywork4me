@@ -7,6 +7,7 @@ import { IconArrowRight, IconCamera, IconPlus, IconUser } from "@/components/Ico
 import { LocationControl } from "@/components/LocationControl";
 import { signOutAuth, signUpWithPassword } from "@/lib/auth";
 import { recordReferral } from "@/lib/referral";
+import { trackConversion } from "@/lib/track";
 import { CATEGORIES } from "@/lib/categories";
 import { fileToBannerDataUrl } from "@/lib/image";
 import { useLocation } from "@/lib/location/LocationProvider";
@@ -77,6 +78,7 @@ export default function SignupPage() {
         photoUrl: photoUrl || undefined,
       });
       await recordReferral(); // attribute the signup to their inviter, if any
+      trackConversion("signup"); // tell Google Ads this account creation succeeded
       // Signed in locally regardless of email confirmation — proceed straight in.
       router.push("/available");
     } catch (err) {
