@@ -189,7 +189,12 @@ function AvailableForm() {
         await updateProvider(editId, values, editToken, ctx);
         router.push(`/provider/${editId}`);
       } else {
-        const provider = await registerProvider(values, ctx);
+        // Record whether this is the provider's REAL location, so customers get
+        // accurate distance (not a guess) when they also share GPS.
+        const provider = await registerProvider(values, {
+          ...ctx,
+          precise: location.source === "gps",
+        });
         rememberListing(provider.id, provider.editToken);
         trackConversion("listing"); // tell Google Ads a listing was published
         router.push(`/provider/${provider.id}`);

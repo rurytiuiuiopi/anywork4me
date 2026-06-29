@@ -53,6 +53,7 @@ function rowToProvider(row: any, reviews: Review[] = []): Provider {
       city: row.city ?? "",
       country: row.country,
       point: { lat: row.lat, lng: row.lng },
+      precise: !!row.precise_location,
     },
     photos: row.photos?.length ? row.photos : [row.id],
     bannerUrl: banner,
@@ -76,6 +77,7 @@ function rowToProvider(row: any, reviews: Review[] = []): Provider {
     featured: isPro || !!row.featured,
     sponsored: !!row.sponsored,
     proUntil,
+    lastActiveAt: row.last_active_at ?? undefined,
     createdAt: row.created_at,
   };
 }
@@ -214,13 +216,18 @@ export class SupabaseProviderRepository implements ProviderRepository {
       links: input.links ?? [],
       intent: input.intent ?? null,
       edit_token: editToken,
+      last_active_at: new Date().toISOString(),
+      precise_location: !!ctx.precise,
     };
     let attempt = await supabase.from("providers").insert(insertRow).select("*").single();
-    for (let i = 0; i < 3 && attempt.error; i++) {
+    for (let i = 0; i < 5 && attempt.error; i++) {
       const m = attempt.error.message;
       if (/links/i.test(m) && "links" in insertRow) delete insertRow.links;
       else if (/intent/i.test(m) && "intent" in insertRow) delete insertRow.intent;
       else if (/edit_token/i.test(m) && "edit_token" in insertRow) delete insertRow.edit_token;
+      else if (/last_active_at/i.test(m) && "last_active_at" in insertRow) delete insertRow.last_active_at;
+      else if (/precise_location/i.test(m) && "precise_location" in insertRow)
+        delete insertRow.precise_location;
       else break;
       attempt = await supabase.from("providers").insert(insertRow).select("*").single();
     }
@@ -267,14 +274,16 @@ export class SupabaseProviderRepository implements ProviderRepository {
         : [id, `${id}-2`, `${id}-3`],
       links: input.links ?? [],
       intent: input.intent ?? null,
+      last_active_at: new Date().toISOString(), // editing counts as activity
     };
 
     let res = await db.from("providers").update(patch).eq("id", id).select("*");
     // Drop optional columns the DB may not have provisioned yet, so edits still save.
-    for (let i = 0; i < 2 && res.error; i++) {
+    for (let i = 0; i < 3 && res.error; i++) {
       const m = res.error.message;
       if (/links/i.test(m) && "links" in patch) delete patch.links;
       else if (/intent/i.test(m) && "intent" in patch) delete patch.intent;
+      else if (/last_active_at/i.test(m) && "last_active_at" in patch) delete patch.last_active_at;
       else break;
       res = await db.from("providers").update(patch).eq("id", id).select("*");
     }

@@ -84,6 +84,8 @@ export interface ProviderLocation {
   city: string;
   country: string; // ISO 3166-1 alpha-2
   point: GeoPoint;
+  /** True only when `point` came from the provider's real GPS (not a centroid). */
+  precise?: boolean;
 }
 
 export interface Provider {
@@ -120,6 +122,9 @@ export interface Provider {
   /** Pro subscription expiry (ISO). When in the future, the provider is "Pro". */
   proUntil?: string;
 
+  /** Last time the provider was active (registered/edited/opened). Drives presence. */
+  lastActiveAt?: string;
+
   createdAt: string;
 
   /**
@@ -136,6 +141,8 @@ export interface UserContext {
   country?: string; // ISO2
   currency?: string; // ISO 4217
   locale?: string; // BCP-47
+  /** True when `point` is the viewer's real GPS (used to store precise provider coords at registration). */
+  precise?: boolean;
 }
 
 export interface SearchQuery {
