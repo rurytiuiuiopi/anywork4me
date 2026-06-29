@@ -49,12 +49,12 @@ export function ProviderCard({
           <Rating rating={p.rating} count={p.reviewsCount} locale={locale} />
           <span className="text-sm text-muted">·</span>
           <span className="text-sm text-muted">
-            {precise ? formatDistance(distanceKm, locale) : p.location.city}
+            {precise && p.location.precise ? formatDistance(distanceKm, locale) : p.location.city}
           </span>
         </div>
 
         <div className="mt-2 flex items-center justify-between gap-2">
-          <AvailabilityBadge status={p.availability} />
+          <AvailabilityBadge availability={p.availability} lastActiveAt={p.lastActiveAt} />
           {p.pricing && (
             <span className="text-sm font-semibold">
               {formatPricing(p.pricing, locale)}

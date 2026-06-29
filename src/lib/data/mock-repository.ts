@@ -173,7 +173,8 @@ export class MockProviderRepository implements ProviderRepository {
         area: input.area ?? "Your area",
         city: ctx.city ?? country.capital,
         country: country.code,
-        point: offsetPoint(base, 0.3, 0.3),
+        point: ctx.precise && ctx.point ? ctx.point : offsetPoint(base, 0.3, 0.3),
+        precise: !!ctx.precise,
       },
       photos: input.bannerUrl
         ? [input.bannerUrl, `${id}-2`, `${id}-3`]
@@ -196,6 +197,7 @@ export class MockProviderRepository implements ProviderRepository {
       verified: false,
       featured: false,
       sponsored: false,
+      lastActiveAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
     };
     this.registered.unshift(provider);

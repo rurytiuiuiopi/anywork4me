@@ -10,5 +10,6 @@ export function ctxFromParams(params: URLSearchParams): UserContext {
     country: params.get("country") ?? undefined,
     currency: params.get("currency") ?? undefined,
     locale: params.get("locale") ?? undefined,
+    precise: ["1", "true"].includes(params.get("precise") ?? ""),
   };
 }

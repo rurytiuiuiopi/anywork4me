@@ -79,7 +79,9 @@ export function ProfileClient({ id }: { id: string }) {
   if (provider === null) return <NotFound />;
 
   const emoji = getCategory(provider.categories[0])?.emoji;
-  const dist = ctx.point ? distanceKm(ctx.point, provider.location.point) : null;
+  // Real distance only when BOTH the viewer and the provider have precise GPS.
+  const dist =
+    ctx.point && provider.location.precise ? distanceKm(ctx.point, provider.location.point) : null;
   const memberSince = (() => {
     try {
       return new Date(provider.createdAt).toLocaleDateString(location.locale, {
@@ -132,7 +134,10 @@ export function ProfileClient({ id }: { id: string }) {
         </div>
         <div className="absolute bottom-3 left-4">
           <span className="rounded-full bg-background/85 px-3 py-1.5 shadow-sm backdrop-blur">
-            <AvailabilityBadge status={provider.availability} />
+            <AvailabilityBadge
+              availability={provider.availability}
+              lastActiveAt={provider.lastActiveAt}
+            />
           </span>
         </div>
       </div>
