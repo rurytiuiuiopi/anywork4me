@@ -133,6 +133,11 @@ export function Conversations() {
                     mine(m) ? "brand-gradient text-accent-foreground" : "bg-surface-2"
                   }`}
                 >
+                  {m.kind === "booking" && (
+                    <p className="mb-1 text-[11px] font-bold uppercase tracking-wide opacity-70">
+                      📅 Booking request
+                    </p>
+                  )}
                   <p className="whitespace-pre-wrap leading-relaxed">{m.body}</p>
                 </div>
               </div>
