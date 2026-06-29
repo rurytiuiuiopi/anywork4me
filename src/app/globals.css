@@ -8,11 +8,11 @@
   --foreground: #0a0a0b;
   --muted: #6b6b75;
   --border: #ececef;
-  --accent: #0284c7;
-  --accent-2: #0891b2;
+  --accent: #4f46e5;
+  --accent-2: #7c3aed;
   --accent-foreground: #ffffff;
   --available: #16a34a;
-  --ring: rgba(2, 132, 199, 0.28);
+  --ring: rgba(79, 70, 229, 0.28);
   --shadow-sm: 0 1px 2px rgba(10, 10, 11, 0.04), 0 1px 3px rgba(10, 10, 11, 0.06);
   --shadow-md: 0 4px 14px rgba(10, 10, 11, 0.07), 0 2px 6px rgba(10, 10, 11, 0.05);
   --shadow-lg: 0 18px 50px -12px rgba(10, 10, 11, 0.22);
@@ -26,11 +26,11 @@
     --foreground: #fafafa;
     --muted: #9b9ba6;
     --border: #262629;
-    --accent: #38bdf8;
-    --accent-2: #22d3ee;
+    --accent: #818cf8;
+    --accent-2: #a78bfa;
     --accent-foreground: #0a0a0b;
     --available: #22c55e;
-    --ring: rgba(56, 189, 248, 0.3);
+    --ring: rgba(129, 140, 248, 0.3);
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
     --shadow-lg: 0 18px 50px -12px rgba(0, 0, 0, 0.7);
@@ -89,7 +89,7 @@ body {
   border: 1px solid var(--border);
 }
 
-/* ── Dashboard: soft sea-blue mesh + glassmorphism ───────────────────────── */
+/* ── Dashboard: soft purple mesh + glassmorphism ───────────────────────── */
 .aw-dash {
   background:
     radial-gradient(55% 45% at 12% -5%, color-mix(in oklab, var(--accent) 14%, transparent), transparent 60%),
