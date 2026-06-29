@@ -95,11 +95,11 @@ export function NotificationBell() {
   return (
     <div className="flex items-center gap-1.5">
       {owns && (
-        <IconLink href="/inbox" label="Booking alerts" badge={bookings}>
+        <IconLink href="/inbox?tab=notifications" label="Notifications" badge={bookings}>
           <IconBell className="h-5 w-5" />
         </IconLink>
       )}
-      <IconLink href="/inbox" label="Messages" badge={messages}>
+      <IconLink href="/inbox?tab=messages" label="Messages" badge={messages}>
         <IconChat className="h-5 w-5" />
       </IconLink>
     </div>
