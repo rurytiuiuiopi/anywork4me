@@ -49,6 +49,15 @@ export default function PrivacyPage() {
         </p>
       </LegalSection>
 
+      <LegalSection heading="Cookies & advertising">
+        <p>
+          We use essential cookies to keep the Service working, and Google Ads cookies to
+          measure our advertising and reach people who may be interested in anywork4me. We use
+          Google Consent Mode: in the EU and UK these advertising cookies stay off until you
+          accept them in our cookie banner.
+        </p>
+      </LegalSection>
+
       <LegalSection heading="Data storage & security">
         <p>
           Data is stored with our database provider (Supabase) and protected with
