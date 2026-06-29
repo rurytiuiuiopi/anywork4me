@@ -53,3 +53,25 @@ export function getClientToken(): string {
   }
   return t;
 }
+
+const CHATTED_KEY = "aw4m.chatted";
+
+/** Remember this device messaged a provider, so we surface a Messages inbox to them. */
+export function markChatStarted(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(CHATTED_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+}
+
+/** True if this device has started a chat (and so should see its own inbox). */
+export function hasStartedChat(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(CHATTED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}

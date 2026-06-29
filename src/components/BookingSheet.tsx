@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { IconCheck } from "@/components/Icons";
 import { sendMessage } from "@/lib/api";
+import { markChatStarted } from "@/lib/ownership";
 import type { Provider } from "@/lib/types";
 
 const waNumber = (p: Provider) => (p.whatsapp ?? p.phone ?? "").replace(/[^\d]/g, "");
@@ -53,6 +54,7 @@ export function BookingSheet({
       body: `Booking request\nDate: ${date}\nTime: ${time}${note ? `\nDetails: ${note}` : ""}`,
       kind: "booking",
     }).catch(() => {});
+    markChatStarted(); // so the customer can read the provider's reply in their Messages
     if (number) {
       const text = encodeURIComponent(
         `Hi ${provider.name}, I'd like to book you (via anywork4me).\n\n` +
