@@ -171,6 +171,7 @@ export interface AdminStats {
     categoryId: CategoryId;
     city: string;
     availability: AvailabilityStatus;
+    lastActiveAt?: string;
     createdAt: string;
   }>;
   topCategories: Array<{ id: CategoryId; count: number }>;

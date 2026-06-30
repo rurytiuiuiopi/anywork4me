@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { getCategory } from "@/lib/categories";
+import { presence } from "@/lib/presence";
 import type { AdminStats } from "@/lib/types";
 
 const COLORS = ["#4f46e5", "#14b8a6", "#ec4899", "#a855f7", "#f59e0b", "#94a3b8"];
@@ -404,7 +405,7 @@ function Overview({
       {/* Executive KPIs */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-6">
         <Kpi icon="📋" label="Total listings" value={stats.totalListings} trend={`+${newThisWeek} this week`} up />
-        <Kpi icon="🟢" label="Available now" value={stats.availableNow} />
+        <Kpi icon="🟢" label="Active now" value={stats.availableNow} />
         <Kpi icon="⭐" label="Reviews" value={stats.totalReviews} />
         <Kpi icon="💳" label="Pro subscribers" value={stats.proSubscribers} />
         <Kpi icon="🏷️" label="Categories" value={stats.categoriesUsed} />
@@ -629,6 +630,7 @@ function ListingRow({
   showStatus?: boolean;
 }) {
   const cat = getCategory(r.categoryId);
+  const pr = presence({ availability: r.availability, lastActiveAt: r.lastActiveAt });
   return (
     <div className="flex items-center gap-2">
       <Link
@@ -648,12 +650,14 @@ function ListingRow({
       {showStatus && (
         <span
           className={`hidden shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium sm:inline ${
-            r.availability === "available"
+            pr.tone === "online" || pr.tone === "recent"
               ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300"
-              : "bg-surface-2 text-muted"
+              : pr.tone === "away"
+                ? "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
+                : "bg-surface-2 text-muted"
           }`}
         >
-          {r.availability === "available" ? "Available" : r.availability}
+          {pr.label}
         </span>
       )}
       <button
