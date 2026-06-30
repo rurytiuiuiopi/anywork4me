@@ -76,16 +76,18 @@ export default function ConfirmEmailPage() {
 
       {status === "error" && (
         <>
-          <h1 className="mt-5 text-2xl font-semibold tracking-tight">This link has expired</h1>
+          <h1 className="mt-5 text-2xl font-semibold tracking-tight">
+            Verification link expired or invalid
+          </h1>
           <p className="mt-2 text-muted">
-            The confirmation link is old or already used. You can sign in directly — your account
-            already works on the device you signed up on.
+            No problem — you can sign in directly, or resend a fresh verification email from the
+            sign-in page.
           </p>
           <Link
             href="/signin"
             className="brand-gradient mt-5 rounded-2xl px-5 py-2.5 text-sm font-semibold text-accent-foreground"
           >
-            Go to sign in
+            Go to sign in &amp; resend
           </Link>
         </>
       )}

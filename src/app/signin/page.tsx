@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IconArrowRight, IconUser } from "@/components/Icons";
-import { signInWithPassword } from "@/lib/auth";
+import { resendConfirmation, signInWithPassword } from "@/lib/auth";
 
 const inputCls =
   "h-12 w-full rounded-2xl border border-border bg-surface-2 px-3.5 text-[15px] outline-none transition focus:border-accent";
@@ -15,6 +15,14 @@ export default function SigninPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  // Coming back from the email confirmation link → confirm it worked.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("verified") === "true") {
+      setNotice("Email verified successfully. You can now sign in.");
+    }
+  }, []);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,12 +33,24 @@ export default function SigninPage() {
       router.push("/");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
-      setError(
-        /confirm/i.test(msg)
-          ? "Please confirm your email first (check your inbox), then sign in."
-          : "Wrong email or password.",
-      );
+      setError(/confirm/i.test(msg) ? "Please confirm your email, or resend the link below." : "Wrong email or password.");
       setBusy(false);
+    }
+  }
+
+  async function resend() {
+    if (!/.+@.+\..+/.test(email.trim())) {
+      setError("Enter your email above first, then tap resend.");
+      return;
+    }
+    setError(null);
+    setNotice("Sending…");
+    try {
+      await resendConfirmation(email);
+      setNotice("Verification email sent — check your inbox (and spam).");
+    } catch {
+      setNotice(null);
+      setError("Couldn’t resend right now. Try again in a moment.");
     }
   }
 
@@ -42,6 +62,12 @@ export default function SigninPage() {
         </div>
         <h1 className="mt-4 text-center text-2xl font-semibold">Sign in</h1>
         <p className="mt-1 text-center text-muted">Welcome back to anywork4me.</p>
+
+        {notice && (
+          <p className="mt-4 rounded-2xl border border-green-300 bg-green-50 px-4 py-2.5 text-center text-sm font-medium text-green-700 dark:border-green-900/50 dark:bg-green-950/40 dark:text-green-300">
+            {notice}
+          </p>
+        )}
 
         <form onSubmit={onSubmit} className="mt-6 space-y-3" autoComplete="on">
           <input
@@ -82,7 +108,15 @@ export default function SigninPage() {
           </button>
         </form>
 
-        <p className="mt-5 text-center text-sm text-muted">
+        <button
+          type="button"
+          onClick={resend}
+          className="mt-4 w-full text-center text-sm font-medium text-accent transition hover:underline"
+        >
+          Resend verification email
+        </button>
+
+        <p className="mt-3 text-center text-sm text-muted">
           New here?{" "}
           <Link href="/signup" className="font-semibold text-accent">
             Create an account
