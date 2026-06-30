@@ -1,3 +1,4 @@
+import { presence } from "../presence";
 import type { AdminStats, Provider } from "../types";
 
 // Turn a list of providers + a review count into the dashboard numbers.
@@ -30,8 +31,15 @@ export function computeAdminStats(providers: Provider[], totalReviews: number): 
       categoryId: p.categories[0],
       city: p.location.city,
       availability: p.availability,
+      lastActiveAt: p.lastActiveAt,
       createdAt: p.createdAt,
     }));
+
+  // "Active now" = genuinely active recently (presence), not the static field.
+  const activeNow = providers.filter((p) => {
+    const tone = presence({ availability: p.availability, lastActiveAt: p.lastActiveAt }).tone;
+    return tone === "online" || tone === "recent";
+  }).length;
 
   // Signups per day for the last 14 days.
   const signupsByDay: AdminStats["signupsByDay"] = [];
@@ -48,7 +56,7 @@ export function computeAdminStats(providers: Provider[], totalReviews: number): 
 
   return {
     totalListings: providers.length,
-    availableNow: providers.filter((p) => p.availability === "available").length,
+    availableNow: activeNow,
     totalReviews,
     proSubscribers: providers.filter(isPro).length,
     categoriesUsed: cats.size,
