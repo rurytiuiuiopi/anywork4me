@@ -103,18 +103,39 @@ export async function signInWithPassword(email: string, password: string): Promi
     password,
   });
   if (error) {
-    // Account not confirmed yet, but this device already has that profile →
-    // restore the local session so they're never locked out on their own device.
+    // "Email not confirmed" is only returned when the password WAS correct, so
+    // it's the real account owner. Never lock them out over a confirmation email
+    // that may never have arrived — sign them in locally (device-local model).
     if (/confirm/i.test(error.message)) {
-      const p = getProfile();
-      if (p?.email && p.email.toLowerCase() === email.trim().toLowerCase()) {
-        saveProfile(p);
-        return;
-      }
+      const existing = getProfile();
+      const profile: LocalProfile =
+        existing?.email && existing.email.toLowerCase() === email.trim().toLowerCase()
+          ? existing
+          : {
+              name: email.trim().split("@")[0] || "Member",
+              accountType: "service",
+              email: email.trim(),
+              createdAt: new Date().toISOString(),
+            };
+      saveProfile(profile);
+      return;
     }
     throw new Error(error.message);
   }
   if (res.user) saveProfile(profileFromUser(res.user));
+}
+
+/** Re-send the sign-up confirmation email (with a link back to the live site). */
+export async function resendConfirmation(email: string): Promise<void> {
+  const supa = getAuthClient();
+  const emailRedirectTo =
+    typeof window !== "undefined" ? `${window.location.origin}/auth/confirm` : undefined;
+  const { error } = await supa.auth.resend({
+    type: "signup",
+    email: email.trim(),
+    options: emailRedirectTo ? { emailRedirectTo } : undefined,
+  });
+  if (error) throw new Error(error.message);
 }
 
 export async function signOutAuth(): Promise<void> {
