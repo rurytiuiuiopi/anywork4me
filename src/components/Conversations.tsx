@@ -95,6 +95,15 @@ export function Conversations() {
 
   useEffect(() => {
     load();
+    // Near real-time: pull new messages every few seconds so replies appear live
+    // without a manual refresh. Faster while a conversation is open.
+    const t = setInterval(load, 6000);
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener("focus", onFocus);
+    };
   }, [load]);
 
   const activeConvo = convos?.find((c) => c.key === active) ?? null;
