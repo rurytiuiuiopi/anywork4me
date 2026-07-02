@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 const MAILTO =
-  "mailto:dgcceo21@gmail.com?subject=anywork4me%20tester&body=Hi!%20I'd%20like%20to%20be%20a%20founding%20tester%20for%20anywork4me.%20My%20Google%20account%20email%20is%3A%20";
+  "mailto:support@anywork4me.com?subject=anywork4me%20tester&body=Hi!%20I'd%20like%20to%20be%20a%20founding%20tester%20for%20anywork4me.%20My%20Google%20account%20email%20is%3A%20";
 
 const steps = [
   "Send us the Gmail address you use on your phone (button below).",
