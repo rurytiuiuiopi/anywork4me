@@ -3,9 +3,10 @@ import type { Metadata } from "next";
 import { Footer } from "@/components/Footer";
 import { HomeNav } from "@/components/HomeNav";
 import { HomeSearch } from "@/components/HomeSearch";
+import { ConnectIllustration, StepChat, StepDeal, StepFind } from "@/components/Illustrations";
 import { PricingSection } from "@/components/PricingSection";
+import { WaitlistBanner } from "@/components/WaitlistBanner";
 import {
-  IconArrowRight,
   IconBriefcase,
   IconBuilding,
   IconCalendar,
@@ -44,51 +45,61 @@ const CATEGORIES = [
   { label: "Security", Icon: IconShield, q: "security" },
 ];
 
-const CUSTOMER_STEPS = ["Search what you need", "Connect & message", "Hire with confidence"];
-const PRO_STEPS = ["Create your profile", "Get found nearby", "Receive jobs & bookings"];
+const STEPS = [
+  { Illo: StepFind, title: "Find nearby", desc: "Search for what you need and see trusted people right around you." },
+  { Illo: StepChat, title: "Connect & chat", desc: "Message or book them directly in the app — no middleman." },
+  { Illo: StepDeal, title: "Get it done", desc: "Agree, get the work done, and rate your experience." },
+];
 
 export default function HomePage() {
   return (
     <div className="min-h-dvh bg-surface">
+      {/* Pre-launch demand capture — one-tap email join above everything. */}
+      <WaitlistBanner />
       <HomeNav />
 
       <main className="mx-auto w-full max-w-5xl px-5 pb-10">
         {/* Hero */}
-        <section className="pt-8 text-center sm:pt-12">
-          <h1 className="mx-auto max-w-3xl text-balance text-3xl font-semibold tracking-tight sm:text-5xl">
-            Find Work. Sell Products. <span className="brand-text">Hire People Fast.</span>
-          </h1>
-          <p className="mx-auto mt-3 max-w-xl text-balance text-muted sm:text-lg">
-            Hire trusted local professionals, freelancers, and businesses — or offer your own
-            services. Search, connect, and get it done.
-          </p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Link
-              href="/search"
-              className="brand-gradient inline-flex items-center gap-2 rounded-2xl px-6 py-3.5 font-semibold text-accent-foreground shadow-sm transition active:scale-95"
-            >
-              <IconCompass className="h-5 w-5" /> Find a Professional
-            </Link>
-            <Link
-              href="/signup"
-              className="inline-flex items-center gap-2 rounded-2xl border border-border bg-background px-6 py-3.5 font-semibold transition hover:shadow-sm active:scale-95"
-            >
-              <IconUser className="h-5 w-5 text-accent" /> Offer Your Services
-            </Link>
+        <section className="pt-8 sm:pt-12">
+          <div className="grid items-center gap-8 lg:grid-cols-2">
+            <div className="text-center lg:text-left">
+              <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
+                Find Work. Sell Products. <span className="brand-text">Hire People Fast.</span>
+              </h1>
+              <p className="mx-auto mt-3 max-w-xl text-balance text-muted sm:text-lg lg:mx-0">
+                Hire trusted local professionals, freelancers, and businesses — or offer your own
+                services. Search, connect, and get it done.
+              </p>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+                <Link
+                  href="/search"
+                  className="brand-gradient inline-flex items-center gap-2 rounded-2xl px-6 py-3.5 font-semibold text-accent-foreground shadow-sm transition active:scale-95"
+                >
+                  <IconCompass className="h-5 w-5" /> Find a Professional
+                </Link>
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-border bg-background px-6 py-3.5 font-semibold transition hover:shadow-sm active:scale-95"
+                >
+                  <IconUser className="h-5 w-5 text-accent" /> Offer Your Services
+                </Link>
+              </div>
+              <p className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted lg:justify-start">
+                <span className="inline-flex items-center gap-1">
+                  <IconCheck className="h-3.5 w-3.5 text-accent" /> Verified profiles
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <IconCheck className="h-3.5 w-3.5 text-accent" /> Free to join
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <IconCheck className="h-3.5 w-3.5 text-accent" /> Nearby & instant
+                </span>
+              </p>
+            </div>
+            <ConnectIllustration className="mx-auto w-full max-w-sm lg:max-w-md" />
           </div>
-          <p className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted">
-            <span className="inline-flex items-center gap-1">
-              <IconCheck className="h-3.5 w-3.5 text-accent" /> Verified profiles
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <IconCheck className="h-3.5 w-3.5 text-accent" /> Free to join
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <IconCheck className="h-3.5 w-3.5 text-accent" /> Nearby & instant
-            </span>
-          </p>
 
-          <div className="mt-7">
+          <div className="mt-8">
             <HomeSearch />
           </div>
         </section>
@@ -112,32 +123,15 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* How it works — two tracks */}
-        <section className="mt-10">
+        {/* How it works — illustrated */}
+        <section className="mt-12">
           <h2 className="text-center text-lg font-semibold sm:text-xl">How it works</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            {[
-              { who: "For customers", steps: CUSTOMER_STEPS, cta: { label: "Find a professional", href: "/search" } },
-              { who: "For professionals", steps: PRO_STEPS, cta: { label: "Create your profile", href: "/signup" } },
-            ].map((track) => (
-              <div key={track.who} className="rounded-3xl border border-border bg-background p-5">
-                <p className="text-xs font-semibold uppercase tracking-wide text-accent">{track.who}</p>
-                <ol className="mt-3 space-y-2.5">
-                  {track.steps.map((s, i) => (
-                    <li key={s} className="flex items-center gap-3">
-                      <span className="brand-gradient flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-accent-foreground">
-                        {i + 1}
-                      </span>
-                      <span className="text-sm font-medium">{s}</span>
-                    </li>
-                  ))}
-                </ol>
-                <Link
-                  href={track.cta.href}
-                  className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-accent"
-                >
-                  {track.cta.label} <IconArrowRight className="h-4 w-4" />
-                </Link>
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
+            {STEPS.map(({ Illo, title, desc }) => (
+              <div key={title} className="flex flex-col items-center text-center">
+                <Illo className="h-24 w-24" />
+                <h3 className="mt-3 font-semibold">{title}</h3>
+                <p className="mx-auto mt-1 max-w-[15rem] text-sm text-muted">{desc}</p>
               </div>
             ))}
           </div>
