@@ -56,7 +56,7 @@ export default function TermsPage() {
       <LegalSection heading="Changes & contact">
         <p>
           We may update these Terms; continued use means acceptance. Questions? Email{" "}
-          <a className="text-accent underline" href="mailto:dgcceo21@gmail.com">dgcceo21@gmail.com</a>.
+          <a className="text-accent underline" href="mailto:support@anywork4me.com">support@anywork4me.com</a>.
         </p>
       </LegalSection>
 
