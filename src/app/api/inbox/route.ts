@@ -59,6 +59,9 @@ export async function POST(req: Request) {
   if (body?.client) {
     const token = String(body.client);
     if (!UUID.test(token)) return NextResponse.json({ messages: [] });
+    // Only mark the provider's replies read when the customer is actually
+    // viewing them — NOT when a background poll is merely counting for a badge.
+    const markRead = !!body?.markRead;
     try {
       const db = createClient(url, key, {
         auth: { persistSession: false },
@@ -71,8 +74,10 @@ export async function POST(req: Request) {
         .order("created_at", { ascending: true })
         .limit(200);
       const messages = (data ?? []).map(rowToMessage);
-      const unreadIds = messages.filter((m) => m.sender === "owner" && !m.read).map((m) => m.id);
-      if (unreadIds.length) await db.from("messages").update({ read: true }).in("id", unreadIds);
+      if (markRead) {
+        const unreadIds = messages.filter((m) => m.sender === "owner" && !m.read).map((m) => m.id);
+        if (unreadIds.length) await db.from("messages").update({ read: true }).in("id", unreadIds);
+      }
       return NextResponse.json({ messages });
     } catch {
       return NextResponse.json({ messages: [] });

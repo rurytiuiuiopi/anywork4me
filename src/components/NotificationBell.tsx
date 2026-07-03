@@ -46,16 +46,18 @@ export function NotificationBell() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    const owned = getOwnedListings();
-    const ownsListings = owned.length > 0;
-    const profile = hasProfile();
-    const chatted = hasStartedChat();
-    if (!ownsListings && !profile && !chatted) return;
-    setOwns(ownsListings);
-    setShow(true);
-
     let alive = true;
     const tick = async () => {
+      // Re-derive every poll so the icons appear the moment the user signs in,
+      // posts a first listing, or sends a first message — no reload needed.
+      const owned = getOwnedListings();
+      const ownsListings = owned.length > 0;
+      const profile = hasProfile();
+      const chatted = hasStartedChat();
+      if (!ownsListings && !profile && !chatted) {
+        if (alive) setShow(false);
+        return;
+      }
       let listingMsgs = 0;
       let bookingUnread = 0;
       if (ownsListings) {
@@ -90,14 +92,19 @@ export function NotificationBell() {
         }
       }
       if (!alive) return;
+      setOwns(ownsListings);
+      setShow(true);
       setBookings(bookingUnread);
       setMessages(listingMsgs + support + clientUnread);
     };
     tick();
     const t = setInterval(tick, 30000);
+    const onFocus = () => tick();
+    window.addEventListener("focus", onFocus);
     return () => {
       alive = false;
       clearInterval(t);
+      window.removeEventListener("focus", onFocus);
     };
   }, []);
 

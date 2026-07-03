@@ -28,7 +28,7 @@ export function computeAdminStats(providers: Provider[], totalReviews: number): 
       id: p.id,
       name: p.name,
       business: p.business,
-      categoryId: p.categories[0],
+      categoryId: p.categories[0] ?? "",
       city: p.location.city,
       availability: p.availability,
       lastActiveAt: p.lastActiveAt,

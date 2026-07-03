@@ -39,13 +39,14 @@ export function Conversations() {
   const [active, setActive] = useState<string | null>(null);
   const [reply, setReply] = useState("");
   const [sending, setSending] = useState(false);
+  const [sendErr, setSendErr] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const owned = getOwnedListings();
     const clientToken = getClientToken();
     const [inbox, mine] = await Promise.all([
       owned.length ? fetchInbox(owned, true) : Promise.resolve({ messages: [], unread: 0 }),
-      fetchMyThreads(clientToken),
+      fetchMyThreads(clientToken, true), // viewing the inbox → mark provider replies read
     ]);
 
     const map = new Map<string, Convo>();
@@ -112,15 +113,23 @@ export function Conversations() {
     e.preventDefault();
     if (!activeConvo || !reply.trim() || sending) return;
     setSending(true);
+    setSendErr(null);
     const myName = getProfile()?.name || "You";
-    if (activeConvo.role === "owner") {
-      await replyToThread(activeConvo.listingId, activeConvo.threadToken, myName, reply.trim());
-    } else {
-      await sendMessage(activeConvo.listingId, { senderName: myName, body: reply.trim() });
+    const text = reply.trim();
+    try {
+      if (activeConvo.role === "owner") {
+        const ok = await replyToThread(activeConvo.listingId, activeConvo.threadToken, myName, text);
+        if (!ok) throw new Error("send failed");
+      } else {
+        await sendMessage(activeConvo.listingId, { senderName: myName, body: text });
+      }
+      setReply(""); // clear only on success, so a failed send keeps the text
+      await load();
+    } catch {
+      setSendErr("Couldn’t send — check your connection and try again.");
+    } finally {
+      setSending(false); // always re-enable the composer
     }
-    setReply("");
-    await load();
-    setSending(false);
   }
 
   // ── Open conversation ────────────────────────────────────────────────────
@@ -152,6 +161,7 @@ export function Conversations() {
               </div>
             ))}
           </div>
+          {sendErr && <p className="mt-2 text-sm text-red-600">{sendErr}</p>}
           <form onSubmit={send} className="mt-3 flex items-center gap-2">
             <input
               value={reply}

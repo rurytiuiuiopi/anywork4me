@@ -111,13 +111,14 @@ export async function replyToThread(
   return res.ok;
 }
 
-/** The conversations this device started (as a client), with the owner's replies. */
-export async function fetchMyThreads(clientToken: string): Promise<Message[]> {
+/** The conversations this device started (as a client), with the owner's replies.
+ * markRead=true only when actually viewing them (not for a background badge count). */
+export async function fetchMyThreads(clientToken: string, markRead = false): Promise<Message[]> {
   if (!clientToken) return [];
   const res = await fetch(`/api/inbox`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ client: clientToken }),
+    body: JSON.stringify({ client: clientToken, markRead }),
   });
   if (!res.ok) return [];
   const d = (await res.json()) as { messages?: Message[] };
