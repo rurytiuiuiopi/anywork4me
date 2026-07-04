@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Footer } from "@/components/Footer";
 import { HomeNav } from "@/components/HomeNav";
 import { HomeSearch } from "@/components/HomeSearch";
-import { ConnectIllustration, StepChat, StepDeal, StepFind } from "@/components/Illustrations";
+import { StepChat, StepDeal, StepFind } from "@/components/Illustrations";
 import { PricingSection } from "@/components/PricingSection";
 import { WaitlistBanner } from "@/components/WaitlistBanner";
 import {
@@ -96,7 +96,16 @@ export default function HomePage() {
                 </span>
               </p>
             </div>
-            <ConnectIllustration className="mx-auto w-full max-w-sm lg:max-w-md" />
+            <div className="mx-auto w-full max-w-md overflow-hidden rounded-4xl border border-border shadow-lg">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/hero-trade.jpg"
+                alt="A delivery pro handing products to a happy customer"
+                className="aspect-[4/3] w-full object-cover"
+                width={1100}
+                height={760}
+              />
+            </div>
           </div>
 
           <div className="mt-8">
@@ -132,6 +141,40 @@ export default function HomePage() {
                 <Illo className="h-24 w-24" />
                 <h3 className="mt-3 font-semibold">{title}</h3>
                 <p className="mx-auto mt-1 max-w-[15rem] text-sm text-muted">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Real professionals across every trade */}
+        <section className="mt-12">
+          <h2 className="text-center text-lg font-semibold sm:text-xl">Real people, every trade</h2>
+          <p className="mx-auto mt-1 max-w-md text-center text-sm text-muted">
+            From plumbing to beauty, catering to electrical — trusted pros near you.
+          </p>
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              { src: "/images/pro-plumbing.jpg", label: "Plumbing" },
+              { src: "/images/pro-beauty.jpg", label: "Beauty" },
+              { src: "/images/pro-electrical.jpg", label: "Electrical" },
+              { src: "/images/pro-catering.jpg", label: "Catering" },
+            ].map((p) => (
+              <div
+                key={p.label}
+                className="group relative overflow-hidden rounded-3xl border border-border"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={p.src}
+                  alt={p.label}
+                  width={720}
+                  height={560}
+                  loading="lazy"
+                  className="aspect-[4/3] w-full object-cover transition duration-300 group-hover:scale-105"
+                />
+                <span className="absolute bottom-2 left-2 rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
+                  {p.label}
+                </span>
               </div>
             ))}
           </div>
