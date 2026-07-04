@@ -72,7 +72,9 @@ function rowToProvider(row: any, reviews: Review[] = []): Provider {
     rating: Number(row.rating ?? 0),
     reviewsCount: row.reviews_count ?? 0,
     reviews,
-    tier: isPro ? "premium" : (row.tier ?? "standard"),
+    // Tier follows the live Pro state — a lapsed subscription drops back to standard
+    // (setProUntil persists "premium", so never trust a stored premium once expired).
+    tier: isPro ? "premium" : row.tier === "premium" ? "standard" : (row.tier ?? "standard"),
     verified: isPro || !!row.verified,
     featured: isPro || !!row.featured,
     sponsored: !!row.sponsored,

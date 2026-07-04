@@ -56,13 +56,13 @@ export function ProfileClient({ id }: { id: string }) {
   }, []);
 
   function onReviewSubmitted(review: Review) {
-    setProvider((prev) => {
-      if (!prev) return prev;
-      const count = prev.reviewsCount + 1;
-      const rating =
-        Math.round(((prev.rating * prev.reviewsCount + review.rating) / count) * 10) / 10;
-      return { ...prev, reviews: [review, ...prev.reviews], reviewsCount: count, rating };
-    });
+    // Show the new review immediately for snappy feedback…
+    setProvider((prev) => (prev ? { ...prev, reviews: [review, ...prev.reviews] } : prev));
+    // …then pull the true rating/count from the server (it recomputes the average,
+    // so we never drift by re-averaging on the client against a partial sample).
+    fetchProvider(id, ctx)
+      .then((fresh) => fresh && setProvider(fresh))
+      .catch(() => {});
   }
 
   useEffect(() => {

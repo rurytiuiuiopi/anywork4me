@@ -43,13 +43,18 @@ export async function initTransaction(opts: {
 
 export async function verifyTransaction(
   reference: string,
-): Promise<{ success: boolean; metadata: Record<string, any> }> {
+): Promise<{ success: boolean; amount: number; currency: string; metadata: Record<string, any> }> {
   const res = await fetch(`${BASE}/transaction/verify/${encodeURIComponent(reference)}`, {
     headers: { Authorization: `Bearer ${key()}` },
   });
   const json: any = await res.json();
   if (!res.ok || !json.status) throw new Error(json?.message || "Paystack verify failed");
-  return { success: json.data?.status === "success", metadata: json.data?.metadata ?? {} };
+  return {
+    success: json.data?.status === "success",
+    amount: Number(json.data?.amount) || 0, // smallest unit (pesewas/kobo/cents)
+    currency: String(json.data?.currency || ""),
+    metadata: json.data?.metadata ?? {},
+  };
 }
 
 /** Validate a Paystack webhook came from Paystack (HMAC-SHA512 of the raw body). */

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { startUpgrade } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
+import { getCountry } from "@/lib/location/countries";
 import { PRO_PLAN, proCharge } from "@/lib/pricing";
 import type { Provider } from "@/lib/types";
 
@@ -19,7 +20,8 @@ export function UpgradeSheet({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { currency, amount } = proCharge(provider.pricing?.currency);
+  // Match the server: charge in the provider's own country currency.
+  const { currency, amount } = proCharge(getCountry(provider.location.country)?.currency);
   const price = formatMoney(amount, currency, locale);
 
   async function pay() {

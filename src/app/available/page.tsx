@@ -169,6 +169,7 @@ function AvailableForm() {
     if (!canSubmit) return;
     setSubmitting(true);
     setError(null);
+    const priceNum = Number(priceFrom);
     const values = {
       name: name.trim(),
       business: business.trim() || undefined,
@@ -177,7 +178,7 @@ function AvailableForm() {
       bio: bio.trim() || undefined,
       phone: phone.trim() || undefined,
       area: area.trim() || undefined,
-      priceFrom: priceFrom ? Number(priceFrom) : undefined,
+      priceFrom: Number.isFinite(priceNum) && priceNum > 0 ? priceNum : undefined,
       priceUnit,
       bannerUrl: bannerUrl || undefined,
       links: links.map((l) => l.trim()).filter(Boolean),

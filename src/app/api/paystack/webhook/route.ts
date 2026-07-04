@@ -13,7 +13,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
-  let event: { event?: string; data?: { metadata?: Record<string, unknown> } } | null = null;
+  let event: {
+    event?: string;
+    data?: { amount?: number; currency?: string; metadata?: Record<string, unknown> };
+  } | null = null;
   try {
     event = JSON.parse(raw);
   } catch {
@@ -21,11 +24,16 @@ export async function POST(req: Request) {
   }
 
   if (event?.event === "charge.success") {
-    const meta = event.data?.metadata ?? {};
+    const data = event.data ?? {};
+    const meta = data.metadata ?? {};
     const pid = typeof meta.providerId === "string" ? meta.providerId : undefined;
-    if (pid) {
-      const days = Number(meta.days) || PRO_PLAN.durationDays;
-      const until = new Date(Date.now() + days * 86_400_000).toISOString();
+    // Only grant Pro if what was paid matches what we asked for at init.
+    const expected = Number(meta.amt);
+    const amountOk =
+      !Number.isFinite(expected) ||
+      (Number(data.amount) === expected && String(data.currency ?? "") === String(meta.cur ?? ""));
+    if (pid && amountOk) {
+      const until = new Date(Date.now() + PRO_PLAN.durationDays * 86_400_000).toISOString();
       try {
         await repository.setProUntil(pid, until);
       } catch {
