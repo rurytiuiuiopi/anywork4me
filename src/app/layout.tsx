@@ -7,6 +7,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { RegisterSW } from "@/components/RegisterSW";
 import { AuthSync } from "@/components/AuthSync";
 import { CookieConsent } from "@/components/CookieConsent";
+import { InstallApp } from "@/components/InstallApp";
 import { RefCapture } from "@/components/RefCapture";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { GoogleTag } from "@/components/GoogleTag";
@@ -104,6 +105,7 @@ export default function RootLayout({
         <AuthSync />
         <RefCapture />
         <CookieConsent />
+        <InstallApp />
         <RegisterSW />
         <Analytics />
         <SpeedInsights />
